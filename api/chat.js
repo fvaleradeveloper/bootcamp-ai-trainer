@@ -97,7 +97,9 @@ export default async function handler(req, res) {
     return;
   }
 
-  const key = process.env.GROQ_API_KEY;
+  // Acepta ambos nombres porque la llave se puede pegar como GROQ_API_KEY
+  // (la que documenta Groq) o como GROQ_API_TOKEN.
+  const key = (process.env.GROQ_API_KEY || process.env.GROQ_API_TOKEN || "").trim();
   if (!key) {
     res.status(503).json({
       error: "El asistente no esta configurado: falta GROQ_API_KEY en Vercel (Settings > Environment Variables).",
@@ -106,10 +108,11 @@ export default async function handler(req, res) {
   }
 
   // Groq apagó llama-3.3-70b-versatile y llama-3.1-8b-instant el 16/08/2026
-  // para los tiers gratuito y developer. Los modelos vigentes en el tier
-  // gratuito son openai/gpt-oss-120b, openai/gpt-oss-20b, qwen/qwen3.6-27b y
-  // qwen/qwen3.8-27b (ver https://console.groq.com/docs/models).
-  const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+  // para los tiers gratuito y developer; hoy son enterprise.
+  // Default medido contra este curso: qwen/qwen3.8-27b da la semántica correcta
+  // de event loop y no rompe los bloques de código. Los openai/gpt-oss-* gastan
+  // tokens en razonamiento y salen con los fences de markdown corruptos.
+  const model = process.env.GROQ_MODEL || "qwen/qwen3.8-27b";
   const ctx = typeof body.context === "string" ? body.context.slice(0, 200) : "";
   const payload = {
     model,
@@ -160,10 +163,52 @@ export default async function handler(req, res) {
 
   const reader = upstream.body.getReader();
   const dec = new TextDecoder();
+  let pending = "";
+
+  // Los modelos de razonamiento (openai/gpt-oss-*)MANDAN delta.reasoning junto
+  // a delta.content. Al reenviarlo crudo, el navegador recibiria el pensamiento
+  // interno y el renderer de markdown lo imprimiria como si fuera respuesta.
+  // Aqui se re-serializa cada evento SSE descartando SOLO ese campo.
+  const filterChunk = (text) => {
+    pending += text;
+    const lines = pending.split("\n");
+    pending = lines.pop() ?? "";
+    const out = [];
+    for (const line of lines) {
+      if (!line.startsWith("data: ") || line.length < 8) {
+        out.push(line);
+        continue;
+      }
+      const body = line.slice(6);
+      if (body === "[DONE]") {
+        out.push(line);
+        continue;
+      }
+      let evt;
+      try {
+        evt = JSON.parse(body);
+      } catch {
+        out.push(line);
+        continue;
+      }
+      const delta = evt?.choices?.[0]?.delta;
+      if (delta && "reasoning" in delta) {
+        delete delta.reasoning;
+        delete delta.reasoning_content;
+        out.push("data: " + JSON.stringify(evt));
+      } else {
+        out.push(line);
+      }
+    }
+    return out.join("\n") + "\n";
+  };
+
   for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
-    if (!res.write(dec.decode(value, { stream: true }))) {
+    const text = dec.decode(value, { stream: true });
+    if (!text) continue;
+    if (!res.write(filterChunk(text))) {
       await new Promise((r) => res.once("drain", r));
     }
   }

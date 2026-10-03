@@ -94,12 +94,16 @@ al recargar.
 
 La IA vive en **`/api/chat`**, que hace de proxy en el servidor: la API key **nunca
 llega al navegador** (regla que el propio curso enseña). El modelo por defecto es
-`openai/gpt-oss-120b` con streaming SSE.
+`qwen/qwen3.8-27b` con streaming SSE.
 
 > Groq apagó `llama-3.3-70b-versatile` y `llama-3.1-8b-instant` el **16/08/2026** en
-> los tiers gratuito y developer (ahora son enterprise). Los modelos vigentes en el
-> tier gratuito son `openai/gpt-oss-120b`, `openai/gpt-oss-20b`, `qwen/qwen3.6-27b`
-> y `qwen/qwen3.8-27b` (ver <https://console.groq.com/docs/models>).
+> los tiers gratuito y developer (ahora son enterprise). Medidos contra este curso,
+> los `openai/gpt-oss-*` responden con los fences de markdown corruptos y gastan
+> tokens en razonamiento; `qwen/qwen3.8-27b` da la semántica correcta del event loop.
+
+El proxy acepta la llave como `GROQ_API_KEY` **o** como `GROQ_API_TOKEN`. Si usas un
+modelo de razonamiento, el proxy descarta `delta.reasoning` para que el pensamiento
+interno nunca llegue al navegador.
 
 Para activarlo:
 

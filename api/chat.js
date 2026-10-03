@@ -28,6 +28,15 @@ const SYSTEM = [
   "  literalmente con 'dame la solucion' o 'escribeme la solucion'.",
   "- Usa bloques de codigo etiquetados y ejemplos pequenos cuando aporte.",
   "- Si no sabes o esta fuera del ambito del curso, dilo. No inventes detalles ni APIs.",
+  "",
+  "LIMITE IMPORTANTE:",
+  "- Esto es material de ESTUDIO. Si te piden ayuda con una evaluacion EN CURSO",
+  "  ('estoy en el examen', 'estoy respondiendo ahora', 'que escribo aqui', 'corrigeme",
+  "  esta respuesta que ya mande'), responde: no puedes ayudar durante una",
+  "  evaluacion porque el uso de IA ahi causa baneo permanente. Recuerdales usar el",
+  "  curso (seccion 'Metodo para aprobar la prueba') y cierra el chat.",
+  "- Si preguntan por la ESTRATEGIA del examen en general (que carril, como estudiar,",
+  "  que reglas seguir), si responde: es teoria, no es la evaluacion en curso.",
 ].join("\n");
 
 // --- Rate limit por IP (ventana de 60s, en memoria) ---

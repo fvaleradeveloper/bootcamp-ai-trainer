@@ -21,16 +21,17 @@ export default async function handler(req, res) {
   }
 
   const sql = db();
-  const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
+  // Schema dedicado `bootcamp` para no chocar con otras apps del mismo Neon.
+  const existing = await sql`SELECT id FROM bootcamp.users WHERE email = ${email}`;
   if (existing.length > 0) {
     res.status(409).json({ error: "Ese email ya esta registrado." });
     return;
   }
 
   const passwordHash = await hashPassword(password);
-  const rows = await sql`INSERT INTO users (email, password_hash) VALUES (${email}, ${passwordHash}) RETURNING id, email`;
+  const rows = await sql`INSERT INTO bootcamp.users (email, password_hash) VALUES (${email}, ${passwordHash}) RETURNING id, email`;
   const user = rows[0];
-  await sql`INSERT INTO progress (user_id) VALUES (${user.id}) ON CONFLICT (user_id) DO NOTHING`;
+  await sql`INSERT INTO bootcamp.progress (user_id) VALUES (${user.id}) ON CONFLICT (user_id) DO NOTHING`;
 
   const token = signSession(user.id);
   res.setHeader("Set-Cookie", sessionCookie(token));

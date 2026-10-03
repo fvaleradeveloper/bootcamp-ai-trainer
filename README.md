@@ -21,18 +21,40 @@ Curso interactivo para preparar la prueba tecnica de **DataAnnotation.tech / Out
 | `lib/db.mjs`, `lib/auth.mjs` | Cliente Neon, cookies, tokens firmados, bcrypt |
 | `scripts/schema.sql`, `scripts/db-init.mjs` | Esquema y creacion de tablas (`npm run db:init`) |
 
+## Aislamiento en Neon (importante)
+
+Este proyecto **comparte el proyecto Neon de `apu-saas`**, que ya tiene sus propias
+tablas en `public` (incluida `public.users`, con una estructura distinta).
+
+Por eso todo el curso vive en un **schema dedicado `bootcamp`**:
+
+| Tabla | Contenido |
+|---|---|
+| `bootcamp.users` | email + `password_hash` (bcrypt) de las cuentas del curso |
+| `bootcamp.progress` | `done` / `open` (arrays de texto) por usuario |
+
+Nunca se toca `public.*`. Si algun dia quieres separarlo del todo, basta con apuntar
+`DATABASE_URL` a otro proyecto/branch de Neon y volver a correr `npm run db:init`.
+
 ## Despliegue (Vercel + Neon)
 
-1. **Neon** (neon.tech): crea proyecto + database. Copia la connection string pooled.
+1. **Neon** (neon.tech): usa el proyecto existente (o crea uno). Copia la connection
+   string **pooled** (host con sufijo `-pooler`).
 2. **GitHub**: sube este repo.
 3. **Vercel**: New Project -> importa el repo. Framework Preset: **Other**.
-   Variables de entorno (Production + Preview):
+   Variables de entorno (Production + Preview + Development):
    - `DATABASE_URL` = connection string pooled de Neon (`?sslmode=require`).
    - `SESSION_SECRET` = secreto largo aleatorio.
-4. Deploy. Luego crea las tablas con la misma `DATABASE_URL`:
-   `npm install` y `npm run db:init` (o corre `scripts/schema.sql` en el SQL Editor de Neon).
+4. Crea las tablas (una sola vez) con la misma `DATABASE_URL`:
+   `npm install` y `npm run db:init` (lee `.env.local` si existe).
 5. Abre tu URL `*.vercel.app`, crea tu cuenta y entra desde tu celular con el mismo
    email: tu progreso (`done` + paneles abiertos) se fusiona por union, nunca se pierde.
+
+### Estado verificado
+
+- `npm test` -> `auth OK` + `routes OK` (handlers probados con Neon mockeado).
+- E2E contra produccion: registro, login desde otro dispositivo, GET/PUT de progreso,
+  filtrado de ids invalidos, 401 sin sesion y 409 por duplicado.
 
 ## Desarrollo local
 

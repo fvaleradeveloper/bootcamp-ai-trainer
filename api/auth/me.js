@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return;
   }
   const sql = db();
-  const rows = await sql`SELECT email FROM users WHERE id = ${userId}`;
+  const rows = await sql`SELECT email FROM bootcamp.users WHERE id = ${userId}`;
   if (rows.length === 0) {
     res.status(401).json({ error: "Sin sesion." });
     return;

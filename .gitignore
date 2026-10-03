@@ -3,16 +3,13 @@ node_modules/
 .env
 .env.local
 .env*.local
-# Tests locales (no se suben, solo para validar antes del push)
-test-auth.mjs
-test-hooks.mjs
-test-routes.mjs
-dedup.py
-checkapi.py
+# Temporales de setup (pueden contener credenciales: NUNCA se suben)
+tmp_*
 # Material personal (no se sube)
 varios.txt
 cleanup.py
 diag.py
 check.js
-# Temporales de setup (credenciales reales: NUNCA se suben)
-tmp_*
+# Archivos generados en local
+__pycache__/
+firebase-debug.log

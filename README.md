@@ -19,6 +19,9 @@ Curso interactivo para preparar la prueba tecnica de **DataAnnotation.tech / Out
 | `api/auth/me.js` | `GET` sesion actual |
 | `api/progress.js` | `GET` / `PUT {done, open}` estado del usuario |
 | `api/chat.js` | `POST {messages, context}` -> stream SSE del asistente IA (Groq) |
+| `api/review.js` | `POST {ex, answer}` -> stream SSE con la **corrección** de la respuesta |
+| `api/answers.js` | `GET` / `PUT {answers:[{ex,body,review}]}` respuestas en la nube |
+| `lib/course.mjs` | Rúbricas oficiales de los 17 ejercicios (solo servidor) |
 | `lib/db.mjs`, `lib/auth.mjs` | Cliente Neon, cookies, tokens firmados, bcrypt |
 | `scripts/schema.sql`, `scripts/db-init.mjs` | Esquema y creacion de tablas (`npm run db:init`) |
 
@@ -41,6 +44,7 @@ En `bootcamp` las tablas viven directamente en `public`:
 |---|---|
 | `users` | email + `password_hash` (bcrypt) de las cuentas del curso |
 | `progress` | `done` / `open` (arrays de texto) por usuario |
+| `answers` | respuesta escrita y última corrección, por usuario y ejercicio |
 
 Sigue la convencion de tu proyecto Neon: **una database por proyecto**.
 `npm run db:init` aplica `scripts/schema.sql` a la database que indique
@@ -62,7 +66,8 @@ Sigue la convencion de tu proyecto Neon: **una database por proyecto**.
 
 ### Estado verificado
 
-- `npm test` -> `auth OK` + `routes OK` + `chat OK` (handlers probados con Neon mockeado).
+- `npm test` -> `auth OK` + `routes OK` + `chat OK` + `review OK` + el smoke del DOM
+  (handlers probados con Neon mockeado, incluido el caso "tabla `answers` sin migrar").
 - E2E contra produccion: registro, login desde otro dispositivo, GET/PUT de progreso,
   filtrado de ids invalidos, 401 sin sesion y 409 por duplicado.
 - Aislamiento: el rol `bootcamp_app` tiene acceso unicamente a la database `bootcamp`.
@@ -89,6 +94,36 @@ El frontend se organiza en **tres marcos**:
 El splitter se arrastra con el raton/touch; el chat se pliega con `▼` y se limpia con
 `🗑`. El historial se guarda en `localStorage` (`bootcamp_ai_chat_v1`) y se reanuda
 al recargar.
+
+### Escribe y que te corrijan
+
+Cada uno de los 17 ejercicios trae un cuadro de respuesta con la plantilla de 5 pasos
+(qué falla · por qué · cuándo · corrección · verificación). **🧐 Evaluar con la IA** envía
+`{ex, answer}` a `/api/review` y devuelve la corrección en streaming, puntuada con la
+**misma rúbrica que enseña la sección "El examen real"**:
+
+| Criterio | Peso |
+|---|---|
+| Detección del bug | 35% |
+| Explicación técnica (a nivel de lenguaje/runtime) | 30% |
+| Corrección funcional | 20% |
+| Claridad y formato | 15% |
+
+Decisiones que hacen que esto sirva y no sea una máquina de respuestas ni de XSS:
+
+- **El cliente solo manda `{ex, answer}`.** La rúbrica, el enunciado y la solución oficial
+  viven en `lib/course.mjs`, en el servidor. El navegador no puede mandar una rúbrica
+  manipulada para inflarse la nota.
+- **La IA califica, no resuelve.** El system prompt prohíbe reescribir la respuesta del
+  alumno y prohíbe decir cuál es el fix, ni siquiera dentro de "qué te faltó". Hay un
+  *test de fuga* explícito en el prompt. Probado: una respuesta vaga recibe 1/10 y tres
+  preguntas, no la corrección.
+- **Si ya abriste la solución**, la corrección lleva un aviso de que el ejercicio ya no
+  entrena detección.
+- **Respuesta vacía**: el botón avisa en el sitio y **no** llama a la IA (ahorra cuota).
+- La respuesta se guarda en `localStorage` (`bootcamp_answers_v1`) siempre, y en la tabla
+  `answers` si hay sesión. Si esa tabla aún no existe, `/api/answers` responde
+  `503 {degraded:true}` y el frontend se queda solo en local: **no rompe el curso**.
 
 ### Asistente IA (Groq, tier gratuito)
 

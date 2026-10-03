@@ -230,6 +230,97 @@ a { color: var(--accent); }
 .box.danger .box-title { color: var(--danger); }
 .box.good .box-title { color: var(--accent2); }
 .box.purple .box-title { color: var(--purple); }
+/* ============ Respuesta del alumno + correccion ============ */
+.answer {
+  margin: 12px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: var(--bg2);
+}
+.answer-hint-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.answer-hint-line strong { font-size: 0.9rem; }
+.answer-steps { font-size: 0.78rem; color: var(--muted); }
+.answer-input {
+  width: 100%;
+  resize: vertical;
+  min-height: 110px;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.answer-input:focus { outline: none; border-color: var(--accent); }
+.answer-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.btn-eval {
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0b0f14;
+  background: var(--accent);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.btn-eval:hover:not(:disabled) { filter: brightness(1.12); }
+.btn-eval:disabled { opacity: 0.5; cursor: not-allowed; }
+.answer-count { font-size: 0.78rem; color: var(--muted); }
+.answer-cloud { font-size: 0.75rem; margin-left: auto; }
+.answer-cloud.on { color: var(--accent2); }
+.answer-cloud.err { color: var(--danger); }
+.review {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.review.typing-line::after {
+  content: "";
+  display: inline-block;
+  width: 7px; height: 14px;
+  margin-left: 2px;
+  background: var(--accent);
+  vertical-align: text-bottom;
+  animation: blink 1s steps(2) infinite;
+}
+.review .md-h {
+  margin: 14px 0 6px;
+  font-size: 0.95rem;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+.review .md-h:first-child { margin-top: 0; }
+.review h5 {
+  margin: 12px 0 4px;
+  font-size: 0.88rem;
+  color: var(--purple);
+}
+.review table { margin: 8px 0; font-size: 0.85rem; }
+.review th, .review td { padding: 6px 9px; text-align: left; vertical-align: top; }
+.review pre { margin: 8px 0; }
+.answer-peek { margin-left: 6px; font-size: 0.78rem; color: var(--muted); }
+
 /* Tables */
 table {
   width: 100%;
@@ -730,6 +821,18 @@ body.offline #offlineBar { display: block; }
 <div class="box warn">
   <span class="box-title">⚠️ Regla de oro</span>
   Escribe tu respuesta ANTES de abrir la pista o la solución. Si miras primero, no entrenas el músculo de detección.
+</div>
+
+<div class="box good">
+  <span class="box-title">✍️ Cómo se usa este curso (hay un corrector)</span>
+  Cada ejercicio tiene <strong>un cuadro para escribir tu respuesta</strong> con la plantilla de
+  5 pasos. Al pulsar <strong>🧐 Evaluar con la IA</strong> la IA califica lo que escribiste
+  contra la rúbrica del ejercicio (detección 35%, explicación técnica 30%, corrección 20%,
+  claridad 15%) y te dice qué te falta.<br><br>
+  <strong>El corrector no te da la solución.</strong> Te devuelve la nota, la tabla de
+  criterios y preguntas para que la encuentres tú. Si ya abriste la solución, te avisa
+  que el ejercicio ya no sirve para entrenar detección. Con cuenta, tu respuesta y la
+  corrección viajan entre celular y PC igual que tu progreso.
 </div>
 
 <h3>Estructura de cada ejercicio</h3>
@@ -2664,6 +2767,8 @@ Si preguntas por un ejercicio concreto te oriento primero: solo doy la solucion 
     if (authArea) authArea.classList.add("hidden");
     if (userArea) userArea.classList.remove("hidden");
     if (emailEl) emailEl.textContent = email;
+    // Las respuestas del alumno tambien viajan entre celular y PC.
+    if (typeof pullAnswers === "function") pullAnswers();
   }
   function setLoggedOut(msg) {
     session.active = false;
@@ -2787,8 +2892,291 @@ Si preguntas por un ejercicio concreto te oriento primero: solo doy la solucion 
     }
   }
 
+  /* ==================== Respuesta del alumno ====================
+   * Un textarea por ejercicio con la plantilla de 5 pasos que enseña el curso.
+   * Se guarda en localStorage siempre y, con sesion, tambien en la nube.
+   * "Evaluar con la IA" llama a /api/review, que califica contra la rubrica
+   * oficial del ejercicio (lib/course.mjs). La IA califica, no resuelve.
+   */
+  var ANSWER_KEY = "bootcamp_answers_v1";
+  var answers = {};
+  var answersCloud = { state: "idle", ok: false };
+  var answerSaveTimer = null;
+  var answerPushTimer = null;
+
+  function loadAnswers() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(ANSWER_KEY) || "{}");
+      if (raw && typeof raw === "object") answers = raw;
+    } catch (e) { answers = {}; }
+  }
+  function saveAnswers() {
+    try { localStorage.setItem(ANSWER_KEY, JSON.stringify(answers)); } catch (e) {}
+  }
+  function recOf(ex) {
+    if (!answers[ex]) answers[ex] = { body: "", review: "" };
+    return answers[ex];
+  }
+
+  function cloudBadge(el, text, cls) {
+    var b = el.querySelector(".answer-cloud");
+    if (!b) return;
+    b.textContent = text;
+    b.className = "answer-cloud" + (cls ? " " + cls : "");
+  }
+
+  /* Sube al servidor (si hay sesion). Debounce largo: es texto, no progreso. */
+  function pushAnswers(ex) {
+    if (!session.active) return;
+    clearTimeout(answerPushTimer);
+    answerPushTimer = setTimeout(function () {
+      var items = ex
+        ? [{ ex: ex, body: recOf(ex).body, review: recOf(ex).review }]
+        : Object.keys(answers).map(function (k) {
+            return { ex: k, body: answers[k].body, review: answers[k].review };
+          });
+      if (!items.length) return;
+      api("/api/answers", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ answers: items })
+      }).then(function (r) {
+        if (r.status === 200 && r.body && r.body.ok) {
+          answersCloud = { state: "ok", ok: true };
+          document.querySelectorAll(".answer").forEach(function (a) {
+            cloudBadge(a, "Respuesta en la nube", "on");
+          });
+        } else if (r.status === 503 && r.body && r.body.degraded) {
+          answersCloud = { state: "degraded", ok: false };
+          document.querySelectorAll(".answer").forEach(function (a) {
+            cloudBadge(a, "Solo en este dispositivo", "err");
+          });
+        } else if (r.status === 401) {
+          answersCloud = { state: "local", ok: false };
+          document.querySelectorAll(".answer").forEach(function (a) {
+            cloudBadge(a, "Sesion vencida", "err");
+          });
+        }
+      }).catch(function () {
+        document.querySelectorAll(".answer").forEach(function (a) {
+          cloudBadge(a, "Sin conexion: guardada aqui", "err");
+        });
+      });
+    }, 1200);
+  }
+
+  /* Al iniciar sesion, baja las respuestas guardadas de la nube.
+     No sobreescribe lo que el alumno ya escribio localmente si la nube esta vacia. */
+  function pullAnswers() {
+    if (!session.active) return;
+    api("/api/answers").then(function (r) {
+      if (r.status !== 200 || !r.body || r.body.degraded) {
+        answersCloud = { state: "degraded", ok: false };
+        document.querySelectorAll(".answer").forEach(function (a) {
+          cloudBadge(a, "Solo en este dispositivo", "err");
+        });
+        return;
+      }
+      var remote = r.body.answers || {};
+      var keys = Object.keys(remote);
+      var touched = 0;
+      keys.forEach(function (ex) {
+        var local = recOf(ex);
+        if (!local.body && remote[ex].body) { local.body = remote[ex].body; touched++; }
+        if (!local.review && remote[ex].review) { local.review = remote[ex].review; touched++; }
+      });
+      if (touched) { saveAnswers(); paintAnswers(); }
+      answersCloud = { state: "ok", ok: true };
+      document.querySelectorAll(".answer").forEach(function (a) {
+        cloudBadge(a, "Respuesta en la nube", "on");
+      });
+    }).catch(function () {});
+  }
+
+  function paintAnswers() {
+    document.querySelectorAll(".exercise").forEach(function (ex) {
+      var id = ex.getAttribute("data-ex");
+      var ta = ex.querySelector(".answer-input");
+      var box = ex.querySelector(".answer-count");
+      var rev = ex.querySelector(".review");
+      var rec = answers[id];
+      if (ta && rec) ta.value = rec.body || "";
+      if (box && rec) box.textContent = (rec.body || "").length + " caracteres";
+      if (rev && rec && rec.review) {
+        rev.classList.remove("hidden", "typing-line");
+        rev.innerHTML = renderMd(rec.review);
+      } else if (rev) {
+        rev.classList.add("hidden");
+        rev.innerHTML = "";
+      }
+    });
+  }
+
+  /* Inserta el bloque de respuesta antes de los botones de pista/solucion. */
+  function buildAnswerBox(exercise) {
+    if (exercise.querySelector(".answer")) return;
+    var id = exercise.getAttribute("data-ex");
+    var box = document.createElement("div");
+    box.className = "answer";
+
+    var line = document.createElement("div");
+    line.className = "answer-hint-line";
+    var strong = document.createElement("strong");
+    strong.textContent = "✍️ Tu respuesta";
+    var steps = document.createElement("span");
+    steps.className = "answer-steps";
+    steps.textContent = "5 pasos: qué falla · por qué · cuándo · corrección · verificación";
+    line.appendChild(strong);
+    line.appendChild(steps);
+
+    var ta = document.createElement("textarea");
+    ta.className = "answer-input";
+    ta.rows = 4;
+    ta.setAttribute("placeholder",
+      "1. Qué falla: ...\n2. Por qué falla (a nivel de lenguaje/runtime): ...\n" +
+      "3. Cuándo se manifiesta: ...\n4. Corrección: ...\n5. Verificación: ...");
+    ta.setAttribute("aria-label", "Tu respuesta al ejercicio " + id);
+
+    var bar = document.createElement("div");
+    bar.className = "answer-bar";
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn-eval";
+    btn.textContent = "🧐 Evaluar con la IA";
+    var count = document.createElement("span");
+    count.className = "answer-count";
+    count.textContent = "0 caracteres";
+    var cloud = document.createElement("span");
+    cloud.className = "answer-cloud";
+    if (session.active) cloud.textContent = "Respuesta en la nube";
+    bar.appendChild(btn);
+    bar.appendChild(count);
+    bar.appendChild(cloud);
+
+    var rev = document.createElement("div");
+    rev.className = "review hidden";
+
+    box.appendChild(line);
+    box.appendChild(ta);
+    box.appendChild(bar);
+    box.appendChild(rev);
+
+    var actions = exercise.querySelector(".actions");
+    if (actions && actions.parentNode) actions.parentNode.insertBefore(box, actions);
+    else exercise.appendChild(box);
+
+    var rec = recOf(id);
+    if (rec.body) ta.value = rec.body;
+
+    ta.addEventListener("input", function () {
+      recOf(id).body = ta.value;
+      count.textContent = ta.value.length + " caracteres";
+      clearTimeout(answerSaveTimer);
+      answerSaveTimer = setTimeout(function () {
+        saveAnswers();
+        pushAnswers(id);
+      }, 400);
+    });
+
+    btn.addEventListener("click", function () { reviewAnswer(id, ta, btn, rev, count); });
+  }
+
+  /* Pide la correccion y la muestra en streaming. Nunca escribe en el textarea. */
+  function reviewAnswer(id, ta, btn, rev, count) {
+    var answer = (ta.value || "").trim();
+    if (answer.length < 20) {
+      rev.classList.remove("hidden");
+      rev.innerHTML = renderMd(
+        "**Escribe tu respuesta primero.** La rúbrica califica los 5 pasos, así que " +
+        "con un texto vacío o de una línea no hay nada que evaluar. " +
+        "Escríbela y vuelve a pulsar el botón.");
+      ta.focus();
+      return;
+    }
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.textContent = "⏳ Corrigiendo…";
+    rev.classList.remove("hidden", "typing-line");
+    rev.innerHTML = "";
+    rev.classList.add("typing-line");
+
+    // Si el alumno ya abrio la solucion, el valor de la practica baja. Se dice.
+    var opened = state.open.indexOf(id + ":sol") !== -1;
+    var aviso = opened
+      ? "> ⚠️ Abrete la solución antes de responder. La corrección sigue siendo válida, " +
+        "pero el ejercicio ya no sirve para entrenar detección: rehazlo sin mirar mañana.\n\n"
+      : "";
+
+    fetch("/api/review", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ex: id, answer: answer })
+    }).then(function (res) {
+      var ct = res.headers.get("content-type") || "";
+      if (!res.ok || ct.indexOf("event-stream") === -1) {
+        return res.json().catch(function () { return {}; }).then(function (b) {
+          rev.classList.remove("typing-line");
+          rev.innerHTML = renderMd("**No se pudo corregir:** " + ((b && b.error) || "error desconocido."));
+        });
+      }
+      return streamSse(res, function (full) {
+        rev.innerHTML = renderMd(aviso + full);
+      }).then(function (full) {
+        rev.classList.remove("typing-line");
+        rev.innerHTML = renderMd(aviso + full);
+        recOf(id).review = full;
+        saveAnswers();
+        pushAnswers(id);
+      });
+    }).catch(function () {
+      rev.classList.remove("typing-line");
+      rev.innerHTML = renderMd("**Sin conexión con la IA.** Tu respuesta quedó guardada; reintenta en unos segundos.");
+    }).then(function () {
+      btn.disabled = false;
+      btn.textContent = "🧐 Volver a corregir";
+      if (count) count.textContent = ta.value.length + " caracteres";
+    });
+  }
+
+  /* Lector SSE generico: delega el pintado a onChunk. Reutilizado por el chat. */
+  function streamSse(res, onChunk) {
+    var reader = res.body.getReader();
+    var dec = new TextDecoder();
+    var buf = "";
+    var full = "";
+    function pump() {
+      return reader.read().then(function (r) {
+        if (r.done) return full;
+        buf += dec.decode(r.value, { stream: true });
+        var lines = buf.split("\n");
+        buf = lines.pop();
+        for (var i = 0; i < lines.length; i++) {
+          if (lines[i].slice(0, 5) !== "data:") continue;
+          var p = lines[i].slice(5).trim();
+          if (!p || p === "[DONE]") continue;
+          try {
+            var j = JSON.parse(p);
+            var ch = j.choices && j.choices[0];
+            var d = ch && ch.delta && ch.delta.content;
+            if (d) { full += d; onChunk(full); }
+          } catch (err) { /* fragmento parcial de un chunk */ }
+        }
+        return pump();
+      });
+    }
+    return pump();
+  }
+
+  function initAnswers() {
+    loadAnswers();
+    document.querySelectorAll(".exercise").forEach(buildAnswerBox);
+    paintAnswers();
+    if (session.active) pullAnswers();
+  }
+
   /* Arranque: engancha todo y pinta el progreso inicial. */
   initExercises();
+  initAnswers();
   initGlobalButtons();
   renderProgress();
   initAuth();
@@ -2826,7 +3214,10 @@ Si preguntas por un ejercicio concreto te oriento primero: solo doy la solucion 
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
 
-  /* Markdown MINIMO aplicado sobre texto ya escapado. */
+  /* Markdown MINIMO aplicado sobre texto ya escapado.
+     Soporta lo que el corrector devuelve: encabezados (##), tablas markdown,
+     negritas, codigo en linea y bloques de codigo. Todo se aplica DESPUES de
+     esc(), asi que la respuesta de la IA nunca puede inyectar HTML. */
   function renderMd(text) {
     var blocks = [];
     var t = esc(text || "");
@@ -2834,8 +3225,32 @@ Si preguntas por un ejercicio concreto te oriento primero: solo doy la solucion 
       blocks.push("<pre><code>" + code.replace(/\n$/, "") + "</code></pre>");
       return "\u0000" + (blocks.length - 1) + "\u0000";
     });
+    // Tablas markdown: | a | b |  seguido de  | --- | --- |
+    t = t.replace(/(^\|.*\|[ \t]*\n^\|[ \t:\-|]+\|[ \t]*\n(?:^\|.*\|[ \t]*\n?)+)/gm, function (m) {
+      var rows = m.replace(/\n$/, "").split("\n");
+      var head = rows[0].replace(/^\||\|$/g, "").split("|");
+      var html = "<table><thead><tr>";
+      head.forEach(function (h) { html += "<th>" + h.trim() + "</th>"; });
+      html += "</tr></thead><tbody>";
+      for (var i = 2; i < rows.length; i++) {
+        var cells = rows[i].replace(/^\||\|$/g, "").split("|");
+        html += "<tr>";
+        cells.forEach(function (c) { html += "<td>" + c.trim() + "</td>"; });
+        html += "</tr>";
+      }
+      blocks.push(html + "</tbody></table>");
+      return "\u0000" + (blocks.length - 1) + "\u0000";
+    });
+    // Encabezados ## y ### al inicio de linea.
+    t = t.replace(/^### (.+)$/gm, "<h5>$1</h5>");
+    t = t.replace(/^## (.+)$/gm, "<h4 class=\"md-h\">$1</h4>");
+    t = t.replace(/^# (.+)$/gm, "<h4 class=\"md-h\">$1</h4>");
     t = t.replace(/`([^`\n]+)`/g, "<code>$1</code>");
     t = t.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+    t = t.replace(/\n{3,}/g, "\n\n");
+    t = t.replace(/\n/g, "<br>");
+    t = t.replace(/<br>(<h5>[\s\S]*?<\/h5>)/g, "$1");
+    t = t.replace(/(<\/h4>)<br>/g, "$1");
     t = t.replace(/\u0000(\d+)\u0000/g, function (m, i) { return blocks[+i]; });
     return t;
   }
@@ -2896,31 +3311,10 @@ Si preguntas por un ejercicio concreto te oriento primero: solo doy la solucion 
 
   /* Lee el SSE de OpenAI (data: {...} / data: [DONE]) y pinta incrementalmente. */
   function chatStream(res, el) {
-    var reader = res.body.getReader();
-    var dec = new TextDecoder();
-    var buf = "";
-    var full = "";
-    function pump() {
-      return reader.read().then(function (r) {
-        if (r.done) return full;
-        buf += dec.decode(r.value, { stream: true });
-        var lines = buf.split("\n");
-        buf = lines.pop();
-        for (var i = 0; i < lines.length; i++) {
-          if (lines[i].slice(0, 5) !== "data:") continue;
-          var p = lines[i].slice(5).trim();
-          if (!p || p === "[DONE]") continue;
-          try {
-            var j = JSON.parse(p);
-            var ch = j.choices && j.choices[0];
-            var d = ch && ch.delta && ch.delta.content;
-            if (d) { full += d; el.innerHTML = renderMd(full); chatScroll(); }
-          } catch (err) { /* fragmento parcial de un chunk */ }
-        }
-        return pump();
-      });
-    }
-    return pump();
+    return streamSse(res, function (full) {
+      el.innerHTML = renderMd(full);
+      chatScroll();
+    });
   }
 
   function chatSend(text) {

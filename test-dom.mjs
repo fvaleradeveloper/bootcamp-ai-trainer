@@ -10,6 +10,25 @@ const errors = [];
 const calls = [];
 const XSS = '<img src=x onerror="alert(1)">';
 const REPLY = "Hola **profe**. Las microtareas son...\n\n```js\nawait Promise.resolve();\n```\n" + XSS;
+// Respuesta tipo del corrector: encabezado, tabla markdown, negritas y XSS.
+const REVIEW = [
+  "## Veredicto",
+  "APTO CON OBSERVACIONES — 7.5/10",
+  "",
+  "| Criterio | Puntaje |",
+  "|---|---:|",
+  "| Deteccion del bug (35%) | 3.5/3.5 |",
+  "| Explicacion tecnica (30%) | 1.5/3 |",
+  "",
+  "## Que te falto",
+  "- Falta el paso 3, **cuando se manifiesta**.",
+  "",
+  "```js",
+  "for (const u of xs) await f(u);",
+  "```",
+  "",
+  XSS,
+].join("\n");
 
 function sse(text) {
   const parts = [
@@ -34,6 +53,15 @@ const dom = new JSDOM(html, {
     w.fetch = (url, opts) => {
       calls.push({ url, opts });
       if (url === "/api/chat") return Promise.resolve(sse(REPLY));
+      if (url === "/api/review") return Promise.resolve(sse(REVIEW));
+      if (url === "/api/answers") {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          headers: { get: () => "application/json" },
+          json: () => Promise.resolve({ answers: {}, degraded: false }),
+        });
+      }
       return Promise.resolve({ ok: true, status: 200, headers: { get: () => null }, json: () => Promise.resolve({}) });
     };
     w.addEventListener("error", (e) => errors.push(String((e && e.error && e.error.message) || e.message)));
@@ -99,7 +127,68 @@ $("chatClear").click();
 ok(d.querySelectorAll(".msg.user").length === 0, "limpiar borra las burbujas");
 ok(w.localStorage.getItem("bootcamp_ai_chat_v1") === "[]", "limpiar borra el historial");
 
-// 8. Plegar / desplegar el marco de chat.
+// 8. Bloque de respuesta del alumno: uno por cada uno de los 17 ejercicios.
+const boxes = d.querySelectorAll(".answer");
+ok(boxes.length === 17, "17 bloques de respuesta (got: " + boxes.length + ")");
+ok(d.querySelectorAll(".answer-input").length === 17, "17 textareas para escribir");
+ok(d.querySelectorAll(".btn-eval").length === 17, "17 botones de correccion");
+
+// Debe quedar ANTES de los botones de pista/solucion: escribir antes de mirar.
+const ex11 = d.querySelector('.exercise[data-ex="1.1"]');
+const box11 = ex11.querySelector(".answer");
+const act11 = ex11.querySelector(".actions");
+ok(!!box11 && !!act11 && box11.compareDocumentPosition(act11) & w.Node.DOCUMENT_POSITION_FOLLOWING,
+  "la respuesta va antes de Pista / Ver solucion (regla de oro)");
+const ta11 = ex11.querySelector(".answer-input");
+ok(ta11.getAttribute("placeholder").indexOf("Qué falla") > -1, "el placeholder propone los 5 pasos");
+
+// Escribir guarda en localStorage.
+ta11.value = "forEach no espera las promesas del callback async, por eso total es 0.";
+ta11.dispatchEvent(new w.Event("input", { bubbles: true }));
+await tick(600);
+const savedAnswers = w.localStorage.getItem("bootcamp_answers_v1");
+ok(!!savedAnswers && savedAnswers.includes("forEach"), "la respuesta se guarda en localStorage");
+ok(ex11.querySelector(".answer-count").textContent.indexOf("caracteres") > -1, "el contador de caracteres se actualiza");
+
+// 9. Corregir: request a /api/review con SOLO {ex, answer} (no la rubrica).
+ex11.querySelector(".btn-eval").click();
+await tick(80);
+const rcall = calls.find((c) => c.url === "/api/review");
+ok(!!rcall, "fetch a /api/review lanzado");
+if (rcall) {
+  const rb = JSON.parse(rcall.opts.body);
+  ok(rb.ex === "1.1", "envia el id del ejercicio");
+  ok(rb.answer && rb.answer.indexOf("forEach") > -1, "envia la respuesta del alumno");
+  // Si el cliente mandara la rubrica, el alumno podria inflarse la nota.
+  ok(!("rubric" in rb) && !("solucion" in rb) && !("enunciado" in rb),
+    "no envia rubrica ni solucion (el servidor las resuelve)");
+}
+const rev = ex11.querySelector(".review");
+ok(!!rev && !rev.classList.contains("hidden"), "la correccion se muestra");
+ok(rev && rev.innerHTML.includes("<table>"), "la tabla de la rubrica se renderiza");
+ok(rev && rev.innerHTML.includes('class="md-h"'), "el encabezado ## se renderiza");
+ok(rev && rev.innerHTML.includes("<strong>faltó</strong>") || (rev && rev.innerHTML.includes("<strong>cuando se manifiesta</strong>")),
+  "negritas dentro de la correccion");
+ok(rev && rev.innerHTML.includes("&lt;img"), "XSS de la correccion escapado -> &lt;img");
+ok(rev && !rev.innerHTML.includes("<img src=x"), "la correccion no inyecta la etiqueta real");
+ok(ex11.querySelector(".btn-eval").disabled === false, "el boton se rehabilita al terminar");
+
+// Guardar la correccion para la proxima visita.
+await tick(600);
+const savedReview = w.localStorage.getItem("bootcamp_answers_v1");
+ok(!!savedReview && savedReview.indexOf("Veredicto") > -1, "la correccion queda guardada");
+
+// 10. Respuesta vacia: el boton NO llama a la IA, avisa en el sitio.
+const ex12 = d.querySelector('.exercise[data-ex="1.2"]');
+const before = calls.filter((c) => c.url === "/api/review").length;
+ex12.querySelector(".btn-eval").click();
+await tick(60);
+ok(calls.filter((c) => c.url === "/api/review").length === before,
+  "respuesta vacia: no llama a la IA");
+ok(ex12.querySelector(".review").textContent.indexOf("Escribe tu respuesta primero") > -1,
+  "respuesta vacia: avisa que escriba primero");
+
+// 11. Plegar / desplegar el marco de chat.
 $("chatToggle").click();
 ok($("chatPane").classList.contains("collapsed"), "toggle pliega el chat");
 $("chatToggle").click();

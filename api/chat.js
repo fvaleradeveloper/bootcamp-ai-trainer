@@ -154,6 +154,12 @@ export default async function handler(req, res) {
     return;
   }
   if (!upstream.ok) {
+    // 429 de Groq = cuota de tokens por minuto del plan gratuito, distinta de
+    // nuestro rate limit por IP. El tiempo de espera real son ~15 segundos.
+    if (upstream.status === 429) {
+      res.status(429).json({ error: "La IA alcanzo su limite de tokens por minuto (gratuito). Espera 15 segundos y reintenta." });
+      return;
+    }
     let detail = upstream.status === 404 ? "modelo no disponible" : "error " + upstream.status;
     try {
       const e = await upstream.json();

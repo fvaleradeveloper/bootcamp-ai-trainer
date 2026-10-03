@@ -33,6 +33,24 @@ const mockSource = `export function neon() {
       return p ? [{ done: p.done, open: p.open, updated_at: new Date() }] : [];
     }
     if (q.includes("insert into progress")) return [];
+    // Simula la tabla todavia no migrada: el endpoint debe degradar, no 500.
+    if (globalThis.__MOCK_NO_ANSWERS__) {
+      throw Object.assign(new Error('relation "answers" does not exist'), { code: "42P01" });
+    }
+    // --- answers (respuestas del alumno + correccion) ---
+    if (q.includes("insert into answers")) {
+      // VALUES (user_id, ex_id, body, review)
+      db.answers = db.answers || {};
+      const key = vals[0] + ":" + vals[1];
+      db.answers[key] = { ex_id: vals[1], body: vals[2], review: vals[3], updated_at: new Date() };
+      return [];
+    }
+    if (q.includes("select ex_id, body, review")) {
+      const rows = Object.keys(db.answers || {})
+        .filter((k) => k.startsWith(vals[0] + ":"))
+        .map((k) => db.answers[k]);
+      return rows;
+    }
     throw new Error("query no mockeada: " + q.slice(0, 80));
   };
 }`;

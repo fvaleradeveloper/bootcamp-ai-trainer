@@ -13,11 +13,11 @@ Curso interactivo para preparar la prueba tecnica de **DataAnnotation.tech / Out
 | Ruta | Que es |
 |---|---|
 | `index.html` | Todo el curso: teoria por modulo, 17 ejercicios con Pista 1 + Pista 2 (guiada) + solucion oculta, plantilla de 5 pasos, checklist |
-| `api/auth/register/route.mjs` | `POST {email, password}` crea usuario + sesion |
-| `api/auth/login/route.mjs` | `POST {email, password}` abre sesion |
-| `api/auth/logout/route.mjs` | `POST` cierra sesion |
-| `api/auth/me/route.mjs` | `GET` sesion actual |
-| `api/progress/route.mjs` | `GET` / `PUT {done, open}` estado del usuario |
+| `api/auth/register.js` | `POST {email, password}` crea usuario + sesion |
+| `api/auth/login.js` | `POST {email, password}` abre sesion |
+| `api/auth/logout.js` | `POST` cierra sesion |
+| `api/auth/me.js` | `GET` sesion actual |
+| `api/progress.js` | `GET` / `PUT {done, open}` estado del usuario |
 | `lib/db.mjs`, `lib/auth.mjs` | Cliente Neon, cookies, tokens firmados, bcrypt |
 | `scripts/schema.sql`, `scripts/db-init.mjs` | Esquema y creacion de tablas (`npm run db:init`) |
 

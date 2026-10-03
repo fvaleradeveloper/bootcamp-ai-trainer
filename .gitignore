@@ -3,7 +3,13 @@ node_modules/
 .env
 .env.local
 .env*.local
-# Material personal / ayudantes (no se suben)
+# Tests locales (no se suben, solo para validar antes del push)
+test-auth.mjs
+test-hooks.mjs
+test-routes.mjs
+dedup.py
+checkapi.py
+# Material personal (no se sube)
 varios.txt
 cleanup.py
 diag.py

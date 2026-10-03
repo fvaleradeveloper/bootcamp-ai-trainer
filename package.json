@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel --prod",
-    "db:init": "node scripts/db-init.mjs"
+    "db:init": "node scripts/db-init.mjs",
+    "test": "node test-auth.mjs && node --import ./test-hooks.mjs test-routes.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",

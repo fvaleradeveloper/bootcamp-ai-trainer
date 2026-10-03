@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   }
 
   const sql = db();
-  const rows = await sql`SELECT id, email, password_hash FROM bootcamp.users WHERE email = ${email}`;
+  const rows = await sql`SELECT id, email, password_hash FROM users WHERE email = ${email}`;
   const user = rows[0];
   // Respuesta generica para no revelar si el email existe (anti-enumeracion).
   if (!user || !(await checkPassword(password, user.password_hash))) {

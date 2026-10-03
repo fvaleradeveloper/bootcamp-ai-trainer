@@ -31,9 +31,9 @@ for (const stmt of statements) {
   await client(stmt);
 }
 
-// Verificacion: lista las tablas creadas dentro del schema `bootcamp`.
+// Verificacion: lista las tablas creadas en la database dedicada.
 const tables = await client`
   SELECT table_name FROM information_schema.tables
-  WHERE table_schema = 'bootcamp' ORDER BY 1`;
+  WHERE table_schema = 'public' ORDER BY 1`;
 console.log("OK: " + statements.length + " sentencias aplicadas.");
-console.log("schema bootcamp -> " + tables.map((t) => t.table_name).join(", "));
+console.log("tables public -> " + tables.map((t) => t.table_name).join(", "));

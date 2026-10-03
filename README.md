@@ -21,29 +21,38 @@ Curso interactivo para preparar la prueba tecnica de **DataAnnotation.tech / Out
 | `lib/db.mjs`, `lib/auth.mjs` | Cliente Neon, cookies, tokens firmados, bcrypt |
 | `scripts/schema.sql`, `scripts/db-init.mjs` | Esquema y creacion de tablas (`npm run db:init`) |
 
-## Aislamiento en Neon (importante)
+## Separacion total respecto a otros proyectos
 
-Este proyecto **comparte el proyecto Neon de `apu-saas`**, que ya tiene sus propias
-tablas en `public` (incluida `public.users`, con una estructura distinta).
+Este curso es un proyecto **completamente independiente**: cada pieza es propia
+del bootcamp y no se comparte con ningun otro de tus proyectos.
 
-Por eso todo el curso vive en un **schema dedicado `bootcamp`**:
+| Pieza | Bootcamp AI Trainer | Otros proyectos (p.ej. apu-saas) |
+|---|---|---|
+| GitHub | `fvaleradeveloper/bootcamp-ai-trainer` | repos propios, nada compartido |
+| Vercel | proyecto `bootcamp-ai-trainer` | proyectos propios, env vars aparte |
+| Neon | **database `bootcamp`** + rol `bootcamp_app` | database `neondb` |
+
+**Base de datos dedicada.** El curso usa su propia database `bootcamp` con un rol
+propio `bootcamp_app`, limitado a esa database: no tiene acceso a las demas.
+En `bootcamp` las tablas viven directamente en `public`:
 
 | Tabla | Contenido |
 |---|---|
-| `bootcamp.users` | email + `password_hash` (bcrypt) de las cuentas del curso |
-| `bootcamp.progress` | `done` / `open` (arrays de texto) por usuario |
+| `users` | email + `password_hash` (bcrypt) de las cuentas del curso |
+| `progress` | `done` / `open` (arrays de texto) por usuario |
 
-Nunca se toca `public.*`. Si algun dia quieres separarlo del todo, basta con apuntar
-`DATABASE_URL` a otro proyecto/branch de Neon y volver a correr `npm run db:init`.
+Sigue la convencion de tu proyecto Neon: **una database por proyecto**.
+`npm run db:init` aplica `scripts/schema.sql` a la database que indique
+`DATABASE_URL` (por eso es clave que esa variable apunte a `bootcamp`).
 
 ## Despliegue (Vercel + Neon)
 
-1. **Neon** (neon.tech): usa el proyecto existente (o crea uno). Copia la connection
-   string **pooled** (host con sufijo `-pooler`).
+1. **Neon** (neon.tech): database **dedicada** para el curso + rol propio.
+   Copia la connection string **pooled** (host con sufijo `-pooler`).
 2. **GitHub**: sube este repo.
 3. **Vercel**: New Project -> importa el repo. Framework Preset: **Other**.
    Variables de entorno (Production + Preview + Development):
-   - `DATABASE_URL` = connection string pooled de Neon (`?sslmode=require`).
+   - `DATABASE_URL` = connection string pooled de la database del curso.
    - `SESSION_SECRET` = secreto largo aleatorio.
 4. Crea las tablas (una sola vez) con la misma `DATABASE_URL`:
    `npm install` y `npm run db:init` (lee `.env.local` si existe).
@@ -55,6 +64,7 @@ Nunca se toca `public.*`. Si algun dia quieres separarlo del todo, basta con apu
 - `npm test` -> `auth OK` + `routes OK` (handlers probados con Neon mockeado).
 - E2E contra produccion: registro, login desde otro dispositivo, GET/PUT de progreso,
   filtrado de ids invalidos, 401 sin sesion y 409 por duplicado.
+- Aislamiento: el rol `bootcamp_app` tiene acceso unicamente a la database `bootcamp`.
 
 ## Desarrollo local
 

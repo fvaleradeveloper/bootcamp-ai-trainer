@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   }
   const sql = db();
   if (req.method === "GET") {
-    const rows = await sql`SELECT done, open, updated_at FROM bootcamp.progress WHERE user_id = ${userId}`;
+    const rows = await sql`SELECT done, open, updated_at FROM progress WHERE user_id = ${userId}`;
     if (rows.length === 0) {
       res.status(200).json({ done: [], open: [], updated_at: null });
       return;
@@ -45,7 +45,7 @@ export default async function handler(req, res) {
     const done = clean(body.done).filter((v) => !v.includes(":"));
     const open = clean(body.open);
     const rows = await sql`
-      INSERT INTO bootcamp.progress (user_id, done, open, updated_at)
+      INSERT INTO progress (user_id, done, open, updated_at)
       VALUES (${userId}, ${done}, ${open}, now())
       ON CONFLICT (user_id) DO UPDATE SET done = EXCLUDED.done, open = EXCLUDED.open, updated_at = now()
       RETURNING done, open, updated_at

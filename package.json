@@ -1,0 +1,19 @@
+{
+  "name": "bootcamp-ai-trainer",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod",
+    "db:init": "node scripts/db-init.mjs"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "bcryptjs": "^2.4.3",
+    "bootcamp-ai-trainer": "file:"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
